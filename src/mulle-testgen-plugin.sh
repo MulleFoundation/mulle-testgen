@@ -1,0 +1,212 @@
+#! /usr/bin/env bash
+#
+#   Copyright (c) 2019 Nat! - Mulle kybernetiK
+#   All rights reserved.
+#
+#   Redistribution and use in source and binary forms, with or without
+#   modification, are permitted provided that the following conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+#   Neither the name of Mulle kybernetiK nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#
+MULLE_TESTGEN_PLUGIN_SH="included"
+
+
+testgen_plugin_usage()
+{
+   [ "$#" -ne 0 ] && log_error "$1"
+
+   cat <<EOF >&2
+Usage:
+   ${MULLE_USAGE_NAME} plugin <command>
+
+   Currently the only command is "list".
+EOF
+
+   exit 1
+}
+
+
+testgen_plugin_all_names()
+{
+   log_entry "testgen_plugin_all_names"
+
+   local upcase
+   local plugindefine
+   local pluginpath
+   local name
+
+   [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
+   [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
+
+   IFS=$'\n'
+   for pluginpath in `ls -1 "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/"*.sh`
+   do
+      IFS="${DEFAULT_IFS}"
+
+      name="`basename -- "${pluginpath}" .sh`"
+
+      # don't load xcodebuild on non macos platforms
+      case "${MULLE_UNAME}" in
+         darwin)
+         ;;
+
+         *)
+            case "${name}" in
+               xcodebuild)
+                  continue
+               ;;
+            esac
+         ;;
+      esac
+
+      echo "${name}"
+   done
+
+   IFS="${DEFAULT_IFS}"
+}
+
+
+testgen_plugin_load()
+{
+   log_entry "testgen_plugin_load"
+
+   local scm="$1"
+
+   if [ ! -f "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/${scm}.sh" ]
+   then
+      fail "SCM \"${scm}\" is not supported (no plugin found)"
+   fi
+
+   # shellcheck source=plugins/symlink.sh
+   . "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/${scm}.sh"
+}
+
+
+testgen_plugin_list()
+{
+   log_entry "testgen_plugin_list"
+
+   local upcase
+   local plugindefine
+   local pluginpath
+   local name
+
+   [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
+   [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
+
+   log_info "Plugins"
+
+   IFS=$'\n'
+   for pluginpath in `ls -1 "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/"*.sh`
+   do
+      basename -- "${pluginpath}" .sh
+   done
+
+   IFS="${DEFAULT_IFS}"
+}
+
+
+testgen_plugin_load_all()
+{
+   log_entry "testgen_plugin_load_all"
+
+   local upcase
+   local plugindefine
+   local pluginpath
+   local name
+
+   [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
+   [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
+
+   log_fluff "Loading test plugins..."
+
+   IFS=$'\n'
+   for pluginpath in `ls -1 "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/"*.sh`
+   do
+      IFS="${DEFAULT_IFS}"
+
+      name="`basename -- "${pluginpath}" .sh`"
+      upcase="`tr 'a-z' 'A-Z' <<< "${name}"`"
+      plugindefine="MULLE_TESTGEN_PLUGIN_${upcase}_SH"
+
+      if [ -z "`eval echo \$\{${plugindefine}\}`" ]
+      then
+         # shellcheck source=plugins/symlink.sh
+         . "${pluginpath}"
+
+         if [ "`type -t "${name}_testgen_project"`" != "function" ]
+         then
+            fail "Source plugin \"${pluginpath}\" has no \"${name}_testgen_project\" function"
+         fi
+
+         log_fluff "Source plugin \"${name}\" loaded"
+      fi
+   done
+
+   IFS="${DEFAULT_IFS}"
+}
+
+
+testgen_plugin_main()
+{
+   log_entry "testgen_plugin_main" "$@"
+
+   while [ $# -ne 0 ]
+   do
+      case "$1" in
+         -h*|--help|help)
+            testgen_plugin_usage
+         ;;
+
+         -*)
+            testgen_plugin_usage "Unknown option \"$1\""
+         ;;
+
+         *)
+            break
+         ;;
+      esac
+
+      shift
+   done
+
+   [ $# -eq 0 ] && testgen_plugin_usage
+
+   local cmd="$1"
+   shift
+
+   case "${cmd}" in
+      list)
+         [ $# -ne 0 ] && testgen_plugin_usage "superflous parameters"
+         testgen_plugin_list
+      ;;
+
+      "")
+         testgen_plugin_usage
+      ;;
+
+      *)
+         testgen_plugin_usage "Unknown command \"$1\""
+      ;;
+   esac
+}
