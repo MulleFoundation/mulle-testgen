@@ -28,9 +28,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSRANGE_SH="included"
-
-
 emit_NSRange_values()
 {
    cat <<EOF
@@ -40,3 +37,12 @@ NSMakeRange( 0, -1)
 NSMakeRange( INT_MAX, INT_MAX)
 EOF
 }
+
+emit_NSRange_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [NSStringFromRange( ${variable}) cStringDescription]);"
+}
+

@@ -1,0 +1,38 @@
+static void   test_i_subarray_with_range_options_()"
+{
+   @autoreleasepool
+   {
+      NSArray *obj;
+      NSArray *value;
+      NSRange params_1[] =
+      {
+         NSMakeRange( 0, 0),
+         NSMakeRange( -1, 1),
+         NSMakeRange( 0, -1),
+         NSMakeRange( INT_MAX, INT_MAX)
+      };
+      unsigned int   i_1;
+      unsigned int   n_1 = 4;
+
+      unsigned int params_2[] =
+      {
+         0,
+         1,
+         1848,
+         INT_MAX
+      };
+      unsigned int   i_2;
+      unsigned int   n_2 = 4;
+
+      obj = [[NSArray alloc] init];
+      for( i_1 = 0; i_1 < n_1; i_1++)
+         for( i_2 = 0; i_2 < n_2; i_2++)
+         {
+            value = [obj subarrayWithRange:params_1[ i_1]
+                         options:params_2[ i_2]];
+            printf( "%s\n", [value cStringDescription]);
+         }
+      [obj release];
+   }
+}
+

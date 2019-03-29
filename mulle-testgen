@@ -91,27 +91,6 @@ main()
    local OPTION_TEST_DIR="test"
 
 
-   # prefer sibling mulle-objc-lista
-   if [ -z "${MULLE_OBJC_LISTA}" ]
-   then
-      MULLE_OBJC_LISTA="${0%/*}/mulle-objc-lista"
-      if [ ! -x "${MULLE_OBJC_LISTA}" ]
-      then
-         MULLE_OBJC_LISTA="`command -v mulle-objc-lista`"
-         [ -z "${MULLE_OBJC_LISTA}" ] && fail "mulle-objc-lista not in PATH"
-      fi
-   fi
-
-   if [ -z "${MULLE_OBJC_UNIQUEID}" ]
-   then
-      MULLE_OBJC_UNIQUEID="${0%/*}/mulle-objc-uniqueid"
-      if [ ! -x "${MULLE_OBJC_UNIQUEID}" ]
-      then
-         MULLE_OBJC_UNIQUEID="`command -v mulle-objc-uniqueid`"
-         [ -z "${MULLE_OBJC_UNIQUEID}" ] && fail "mulle-objc-unique not in PATH"
-      fi
-   fi
-
    #
    # simple option handling
    #
@@ -172,6 +151,14 @@ main()
 
          testgen_plugin_main "$@"
       ;;
+
+      print)
+         # shellcheck source=src/mulle-fetch-commands.sh
+         . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
+
+         testgen_print_main "$@"
+      ;;
+
 
       uname)
          echo "${MULLE_UNAME}"

@@ -28,9 +28,7 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSDATA_SH="included"
-
-emit_NSData_values()
+emit_NSData_pointer_values()
 {
    cat <<EOF
 nil
@@ -38,4 +36,13 @@ nil
 [NSData dataWithBytes:"\xe2\x98\x84\xef\xb8\x8f\xe2\x98\x83\xef\xb8\x8f\xf0\x9f\x91\x8d\xf0\x9f\x8f\xbe"  // emoji comet, snowman, thumbs-up brown
                length:19]
 EOF
+}
+
+
+emit_NSData_pointer_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
 }

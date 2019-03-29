@@ -28,10 +28,7 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSNUMBER_SH="included"
-
-
-emit_NSNumber_values()
+emit_NSNumber_pointer_values()
 {
    cat <<EOF
 nil
@@ -46,3 +43,13 @@ nil
 [NSNumber numberWithDouble:18.48]
 EOF
 }
+
+
+emit_NSNumber_pointer_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
+}
+

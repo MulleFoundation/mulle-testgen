@@ -28,12 +28,10 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSSTRING_SH="included"
-
 #
 # emit mutableCopy strings, as they will indicate leakage more easily
 #
-emit_NSString_values()
+emit_NSString_pointer_values()
 {
    cat <<EOF
 nil
@@ -45,4 +43,14 @@ nil
                          length:19
                        encoding:NSUTF8StringEncoding] autorelease]
 EOF
+}
+
+
+
+emit_NSString_pointer_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
 }

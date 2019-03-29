@@ -28,9 +28,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_UNSIGNED_SHORT_SH="included"
-
-
 emit_unsigned_short_values()
 {
    cat <<EOF
@@ -38,4 +35,14 @@ emit_unsigned_short_values()
 1
 1848
 EOF
+}
+
+
+
+emit_unsigned_short_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%u\\n\", ${variable});"
 }

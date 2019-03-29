@@ -39,11 +39,100 @@ testgen_plugin_usage()
 Usage:
    ${MULLE_USAGE_NAME} plugin <command>
 
-   Currently the only command is "list".
+   Manage the type plugins for mulle-testgen.
+   A type plugin emits a number of values to be used as input for methods.
+
+Commands:
+   list                : list available plugins
+   filename <type>     : output plugin filename path for type
+   functionname <type> : output bash functionname for type
 EOF
 
    exit 1
 }
+
+
+r_plugin_name_for_type()
+{
+   log_entry "r_plugin_name_for_type" "$@"
+
+   local signature="$1"
+   local suffix="$2"
+
+   # remove trailing spaces
+   signature="${signature%% }"
+
+   case "${signature}" in
+      "")
+         return 1
+      ;;
+
+      *\*)
+         is_pointer='YES'
+         r_plugin_name_for_type "${signature%\*}" "_pointer${suffix}"
+         return $?
+      ;;
+
+      @\".*\")
+         RVAL="${signature#@\"}"
+         RVAL="${RVAL%\"}"
+         RVAL="${RVAL}${suffix}"
+         RVAL="${RVAL// /_}"
+         return 0
+      ;;
+
+      @)
+         RVAL="id"
+         return 0
+      ;;
+
+      *)
+         RVAL="${signature}${suffix}"
+         RVAL="${RVAL// /_}"
+         return 0
+      ;;
+   esac
+}
+
+
+r_plugin_values_functionname_for_type()
+{
+   log_entry "r_plugin_values_functionname_for_type"
+
+   if r_plugin_name_for_type "$@"
+   then
+      RVAL="emit_${RVAL}_values"
+      return 0
+   fi
+   return 1
+}
+
+
+r_plugin_printer_functionname_for_type()
+{
+   log_entry "r_plugin_printer_functionname_for_type"
+
+   if r_plugin_name_for_type "$@"
+   then
+      RVAL="emit_${RVAL}_printer"
+      return 0
+   fi
+   return 1
+}
+
+
+r_plugin_filename_for_type()
+{
+   log_entry "r_plugin_filename_for_type"
+
+   if r_plugin_name_for_type "$@"
+   then
+      RVAL="${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/${RVAL}.sh"
+      return 0
+   fi
+   return 1
+}
+
 
 
 testgen_plugin_all_names()
@@ -130,15 +219,14 @@ testgen_plugin_load_all()
 {
    log_entry "testgen_plugin_load_all"
 
-   local upcase
-   local plugindefine
+   local functionname
    local pluginpath
    local name
 
    [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
    [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
 
-   log_fluff "Loading test plugins..."
+   log_fluff "Loading type plugins..."
 
    IFS=$'\n'
    for pluginpath in `ls -1 "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/"*.sh`
@@ -146,20 +234,19 @@ testgen_plugin_load_all()
       IFS="${DEFAULT_IFS}"
 
       name="`basename -- "${pluginpath}" .sh`"
-      upcase="`tr 'a-z' 'A-Z' <<< "${name}"`"
-      plugindefine="MULLE_TESTGEN_PLUGIN_${upcase}_SH"
+      functionname="emit_${name//-/_}_values"
 
-      if [ -z "`eval echo \$\{${plugindefine}\}`" ]
+      if [ "`type -t "${functionname}"`" != "function" ]
       then
          # shellcheck source=plugins/symlink.sh
          . "${pluginpath}"
 
-         if [ "`type -t "${name}_testgen_project"`" != "function" ]
+         if [ "`type -t "${functionname}"`" != "function" ]
          then
-            fail "Source plugin \"${pluginpath}\" has no \"${name}_testgen_project\" function"
+            fail "Type plugin \"${pluginpath}\" has no \"${functionname}\" function"
          fi
 
-         log_fluff "Source plugin \"${name}\" loaded"
+         log_fluff "Type plugin \"${name}\" loaded"
       fi
    done
 
@@ -201,12 +288,35 @@ testgen_plugin_main()
          testgen_plugin_list
       ;;
 
+      filename|functionname)
+         local typestring
+
+         [ $# -eq 0 ] && testgen_plugin_usage "missing parameter"
+
+         typestring="$1"; shift
+
+         [ $# -ne 0 ] && testgen_plugin_usage "superflous parameters \"$*\""
+
+
+         if [ "${cmd}" = "filename" ]
+         then
+            r_plugin_filename_for_type "${typestring}"
+         else
+            r_plugin_values_functionname_for_type "${typestring}"
+         fi
+         if [ $? -ne 0 ]
+         then
+            fail "Untranslatable type"
+         fi
+         echo "${RVAL}"
+      ;;
+
       "")
          testgen_plugin_usage
       ;;
 
       *)
-         testgen_plugin_usage "Unknown command \"$1\""
+         testgen_plugin_usage "Unknown command \"${cmd}\""
       ;;
    esac
 }

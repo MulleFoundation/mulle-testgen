@@ -28,13 +28,20 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSSET_SH="included"
-
-emit_NSSet_values()
+emit_NSMutableSet_pointer_values()
 {
    cat <<EOF
 nil
 [NSMutableSet set]
 [NSMutableSet setWithArray:@[ "1", @"2", @1848 ]]
 EOF
+}
+
+
+emit_NSMutableSet_pointer_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
 }

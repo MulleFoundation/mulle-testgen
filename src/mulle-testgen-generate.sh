@@ -74,42 +74,6 @@ EOF
 }
 
 
-r_get_plugin_name()
-{
-   log_entry "emit_class_test_header" "$@"
-
-   local signature="$1"
-   local suffix="$1"
-
-   case ${signature} in
-      "")
-         return 1
-      ;;
-
-      \*\*)
-         is_pointer='YES'
-         r_get_plugin_name "${signature%\*}" "_pointer${suffix}"
-         return $?
-      ;;
-
-      @\".*\")
-         RVAL="${signature#@\"}"
-         RVAL="${RVAL%\"}"
-         RVAL="${RVAL}${suffix}"
-         return 0
-      ;;
-
-      @)
-         RVAL="id"
-         return 0
-      ;;
-
-      *)
-         RVAL="${signature}_suffix"
-         return 0
-      ;;
-   esac
-}
 
 
 emit_class_test_header()
@@ -205,66 +169,273 @@ EOF
 }
 
 
-emit_instancemethod_test()
+#
+#
+#
+testgen_collect_parameters()
 {
-   log_entry "emit_instancemethod_test" "$@"
+   log_entry "testgen_collect_parameters" "$@"
 
-   local classname="$1"
+   local selectorparse="$1"
+   local typeparse="$2"
+   local indent="$3"
+
+   local fragment
+   local type
+   local functionname
+   local value
+   local n
+
+   n=1
+   while [ ! -z "${selectorparse}" ]
+   do
+      fragment="${selectorparse%%:*}"
+      selectorparse="${selectorparse#*:}"
+
+      type="${typeparse%%,*}"
+      typeparse="${typeparse#*,}"
+
+      log_debug "fragment      = \"${fragment}\""
+      log_debug "selectorparse = \"${selectorparse}\""
+      log_debug "type          = \"${type}\""
+      log_debug "typeparse     = \"${typeparse}\""
+
+      values="0"
+      if r_plugin_values_functionname_for_type "${type}"
+      then
+         functionname="${RVAL}"
+         if [ "`type -t "${functionname}" `" = "function" ]
+         then
+            values="`"${functionname}" "${type}"  "${fragment}" `"
+            if [ -z "${values}" ]
+            then
+               internal_fail "\"${functionname}\" returned nothing"
+            fi
+         else
+            log_fluff "Type \"${type}\" is not supported by a plugin (${functionname} is missing)"
+         fi
+      fi
+
+      printf "${indent}${type} params_${n}[] ="$'\n'"${indent}{"
+
+      prefix=$'\n'"${indent}   "
+
+      m=0
+      IFS=$'\n'
+      for value in ${values}
+      do
+         printf "%s%s" "${prefix}" "${value}"
+         prefix=","$'\n'"${indent}   "
+         m=$((m + 1))
+      done
+      IFS="${DEFAULT_IFS}"
+
+      printf "\n%s};\n" "${indent}"
+      printf "${indent}unsigned int   i_$n;\n"
+      printf "${indent}unsigned int   n_$n = $m;\n"
+      echo
+      n=$((n + 1))
+   done
+
+   RVAL="$n"
+}
+
+
+testgen_emit_methodcall()
+{
+   log_entry "testgen_emit_methodcall" "$@"
+
+   local obj="$1"
+   local selectorparse="$2"
+   local returntype="$3"
+   local indent="$4"
+
+   if [ "${returntype}" = "void" ]
+   then
+      printf "${indent}[${obj}"
+   else
+      printf "${indent}value = [${obj}"
+   fi
+
+   case "${selectorparse}" in
+      *:)
+      ;;
+
+      *)
+         echo "${selectorparse}];"
+         return 0
+      ;;
+   esac
+
+   local i
+   local delim
+
+   delim=" "
+   indent="${indent}   "
+
+   i=1
+   while [ ! -z "${selectorparse}" ]
+   do
+      fragment="${selectorparse%%:*}"
+      selectorparse="${selectorparse#*:}"
+
+      printf "%s%s:params_%s[ i_%s]%s" "${delim}" "${fragment}" "$i" "$i"
+      delim=$'\n'"${indent}          " # fudged
+
+      i=$((i + 1))
+   done
+   echo "];"
+}
+
+
+
+testgen_emit_printer()
+{
+   log_entry "testgen_emit_printer" "$@"
+
+   local type="$1"
+   local indent="$2"
+
+   local functionname
+
+   r_plugin_printer_functionname_for_type "${type}"
+   functionname="${RVAL}"
+
+   if [ -z "${functionname}" -o "`type -t "${functionname}" `" != "function" ]
+   then
+      echo "${indent}// no plugin printer found for ${type}"
+      echo "${indent}printf( \"value is%s0\\n\", ! value ? \" \" : \"not \");"
+      return
+   fi
+
+   "${functionname}" 'value' "${indent}"
+}
+
+
+
+_emit_method_test()
+{
+   log_entry "_emit_method_test" "$@"
+
+   local classname_pointer="$1"
    local name="$2"
    local signature="$3"
    local identifier="$4"
    local functionname="$5"
+   local isclassmethod="$6"
+
+   # typical signature
+   # 'id;NSArray *;SEL;NSArray *;
+
+   local classname
+
+   classname="${classname_pointer%\*}"
+   classname="${classname%% }"
+
+   local typeparse
+   local indent
+
+   typeparse="${signature}"
+   returntype="${typeparse%%,*}"
+   typeparse="${typeparse#*,}"
+
+   # skip self and _cmd
+   typeparse="${typeparse#*,}"
+   typeparse="${typeparse#*,}"
+
+   log_debug "returntype = \"${returntype}\""
+   log_debug "typeparse  = \"${typeparse}\""
+
+   local obj
 
    cat <<EOF
-
-static void   ${functionname}()
+static void   ${functionname}()"
 {
-   ${classname}   *obj;
-
    @autoreleasepool
    {
-      obj = [[${classname} alloc] init];
-      [obj ${name}];
+EOF
+   indent="      "
+
+   if [ "${isclassmethod}" = 'YES' ]
+   then
+      obj="${classname}"
+   else
+      echo "${indent}${classname_pointer}obj;"
+      obj="obj"
+   fi
+
+   if [ "${returntype}" != "void" ]
+   then
+      case "${returntype}" in
+         *\*)
+            echo "${indent}${returntype}value;"
+         ;;
+
+         *)
+            echo "${indent}${returntype} value;"
+         ;;
+      esac
+   fi
+
+   #
+   # generate test functions
+   #
+
+   testgen_collect_parameters "${name}" "${typeparse}" "${indent}"
+   n=${RVAL:-0}
+
+   # emit parameter arrays
+
+   if [ "${isclassmethod}" = 'NO' ]
+   then
+      case "${name}" in
+         init|init[A-Z]*)
+            echo "${indent}obj = [${classname} alloc];"
+         ;;
+
+         *)
+            echo "${indent}obj = [[${classname} alloc] init];"
+         ;;
+      esac
+   fi
+
+   i=1
+   while [ $i -lt $n ]
+   do
+      echo "${indent}for( i_$i = 0; i_$i < n_$i; i_$i++)"
+      indent="${indent}   "
+      i=$(( i + 1))
+   done
+
+   echo "${indent#   }{"
+   testgen_emit_methodcall "${obj}" "${name}" "${returntype}" "${indent}"
+   if [ "${returntype}" != "void" ]
+   then
+      testgen_emit_printer "${returntype}" "${indent}"
+   fi
+   echo "${indent#   }}"
+
+   cat <<EOF
       [obj release];
    }
-   // TODO: lots of work
 }
 
 EOF
 }
 
-
-emit_classmethod_test()
-{
-   log_entry "emit_classmethod_test" "$@"
-
-   local classname="$1"
-   local name="$2"
-   local signature="$3"
-   local identifier="$4"
-
-   cat <<EOF
-
-static void   test_cm_${identifier}()
-{
-   @autoreleasepool
-   {
-      [${classname} ${name}];
-   }
-   // TODO: lots of work
-}
-
-EOF
-}
 
 
 emit_method_test()
 {
-   log_entry "emit_classmethod_test" "$@"
+   log_entry "emit_method_test" "$@"
 
    local classname="$1"
    local name="$2"
    local signature="$3"
+
+   [ -z "${classname}" ] && internal_fail "classname is empty"
+   [ -z "${name}" ]      && internal_fail "name is empty"
+   [ -z "${signature}" ] && internal_fail "signature is empty"
 
    local identifier
 
@@ -278,6 +449,7 @@ emit_method_test()
    identifier="`tr "A-Z:" "a-z_" <<< "${RVAL}"`"
 
    local functionname
+   local isclassmethod
 
    case "${name}" in
       ?_*)
@@ -285,28 +457,27 @@ emit_method_test()
          return 0
       ;;
 
-      +*)
-         functionname="test_im_${identifier}"
-         emit_classmethod_test "${classname}" \
-                               "${name:1}" \
-                               "${signature}" \
-                               "${identifier}"\
-                               "${functionname}"
+      \+*)
+         functionname="test_c_${identifier}"
+         isclassmethod='YES'
       ;;
 
-      -*)
-         functionname="test_cm_${identifier}"
-         emit_instancemethod_test "${classname}" \
-                                  "${name:1}" \
-                                  "${signature}" \
-                                  "${identifier}" \
-                                  "${functionname}"
+      \-*)
+         functionname="test_i_${identifier}"
+         isclassmethod='NO'
       ;;
 
       *)
-         fail "Unknown method format \"${method}\""
+         fail "Unknown method format \"${method}\" (need -/+ prefix)"
       ;;
    esac
+
+   _emit_method_test "${classname}" \
+                     "${name:1}" \
+                     "${signature}" \
+                     "${identifier}"\
+                     "${functionname}" \
+                     "${isclassmethod}"
 
    r_add_line "${METHOD_TEST_FUNCTIONS}" "${functionname}"
    METHOD_TEST_FUNCTIONS="${RVAL}"
@@ -327,12 +498,14 @@ emit_method_tests()
    local methodid
    local name
    local signature
+   local variadic
+   local bits
 
    METHOD_TEST_FUNCTIONS=""
 
    [ "${OPTION_EMIT_METHOD_TESTS}" = 'NO' ] && return 0
 
-   while IFS=";" read -r classid classname categoryid categoryname methodid name signature
+   while IFS=";" read -r classid classname categoryid categoryname methodid name signature variadic bits
    do
       if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
       then
@@ -343,6 +516,8 @@ emit_method_tests()
          log_trace2 "method-id:          ${methodid}"
          log_trace2 "method-name:        ${name}"
          log_trace2 "method-signature:   ${signature}"
+         log_trace2 "method-variadic:    ${variadic}"
+         log_trace2 "method-bits:        ${bits}"
       fi
 
       emit_method_test "${classname}" "${name}" "${signature}" || return 1
@@ -471,38 +646,23 @@ generate_class_test()
 
    text="`emit_class_test "${classid}" "${classname}" "${library}" "${libraryname}" `" || return 1
 
-   mkdir_parent_if_missing "${filename}"
+   r_mkdir_parent_if_missing "${filename}"
+
    log_debug "Write \"${filename}\""
    echo "${text}" > "${filename}"
 }
 
 
-generate_class_tests()
+generate_class_tests_from_csv()
 {
-   log_entry "generate_class_tests" "$@"
+   log_entry "generate_class_tests_from_csv" "$@"
 
    local library="$1"
    local libraryname="$2"
-   local filterid="$3"
+   local lines="$3"
 
    local classname
    local classid
-
-   local lines
-   local cmdline="'${MULLE_OBJC_LISTA}'"
-
-   if [ ! -z "${filterid}" ]
-   then
-      cmdline="${cmdline} -f '${filterid}'"
-   fi
-   cmdline="${cmdline} -C '${library}'"
-
-   lines="`eval_rexekutor "${cmdline}" `" || fail "mulle-objc-lista failed"
-   if [ -z "${lines}" ]
-   then
-      log_info "No classes found in \"${library}\""
-      return
-   fi
 
    while IFS=";" read -r classid classname superid superclassname
    do
@@ -536,8 +696,81 @@ generate_class_tests()
 }
 
 
+generate_class_tests()
+{
+   log_entry "generate_class_tests" "$@"
+
+   local library="$1"
+   local libraryname="$2"
+   local filterid="$3"
+
+   local lines
+   local cmdline="'${MULLE_OBJC_LISTA}'"
+
+   if [ ! -z "${filterid}" ]
+   then
+      cmdline="${cmdline} -f '${filterid}'"
+   fi
+   cmdline="${cmdline} -C '${library}'"
+
+   lines="`eval_rexekutor "${cmdline}" `" || fail "mulle-objc-lista failed"
+   if [ -z "${lines}" ]
+   then
+      log_info "No classes found in \"${library}\""
+      return
+   fi
+
+   generate_class_tests_from_csv "${library}" "${libraryname}" "${lines}"
+}
+
+
+testgen_environment()
+{
+   log_entry "testgen_environment" "$@"
+
+   # shellcheck source=src/mulle-fetch-commands.sh
+   . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-plugin.sh"
+
+   testgen_plugin_load_all
+
+   # prefer sibling mulle-objc-lista
+   if [ -z "${MULLE_OBJC_LISTA}" ]
+   then
+      MULLE_OBJC_LISTA="${0%/*}/mulle-objc-lista"
+      if [ ! -x "${MULLE_OBJC_LISTA}" ]
+      then
+         MULLE_OBJC_LISTA="`command -v mulle-objc-lista`"
+         [ -z "${MULLE_OBJC_LISTA}" ] && fail "mulle-objc-lista not in PATH"
+      fi
+   fi
+
+   if [ -z "${MULLE_OBJC_UNIQUEID}" ]
+   then
+      MULLE_OBJC_UNIQUEID="${0%/*}/mulle-objc-uniqueid"
+      if [ ! -x "${MULLE_OBJC_UNIQUEID}" ]
+      then
+         MULLE_OBJC_UNIQUEID="`command -v mulle-objc-uniqueid`"
+         [ -z "${MULLE_OBJC_UNIQUEID}" ] && fail "mulle-objc-unique not in PATH"
+      fi
+   fi
+}
+
+
+testgen_print_main()
+{
+   log_entry "testgen_print_main" "$@"
+
+   testgen_environment
+
+   emit_method_test "$@"
+}
+
+
+
 testgen_generate_main()
 {
+   log_entry "testgen_generate_main" "$@"
+
    local library
 
    #
@@ -590,10 +823,8 @@ testgen_generate_main()
       shift
    done
 
-   # shellcheck source=src/mulle-fetch-commands.sh
-   . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-plugin.sh"
 
-
+   testgen_environment
 
    if [ $# -ne 0 ]
    then

@@ -28,9 +28,6 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_UNSIGNED_LONG_SH="included"
-
-
 emit_unsigned_long_values()
 {
    cat <<EOF
@@ -39,4 +36,13 @@ emit_unsigned_long_values()
 1848
 LONG_MAX
 EOF
+}
+
+
+emit_unsigned_long_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%lu\\n\", ${variable});"
 }

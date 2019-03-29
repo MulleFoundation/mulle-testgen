@@ -41,3 +41,12 @@ NSUTF16StringEncoding
 NSASCIIStringEncoding
 EOF
 }
+
+
+emit_NSStringEncoding_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%d\\n\", ${variable});"
+}

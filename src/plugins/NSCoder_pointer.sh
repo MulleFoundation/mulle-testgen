@@ -28,20 +28,23 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-emit_NSDictionary_pointer_values()
+emit_NSCoder_pointer_values()
 {
-   cat <<EOF
-nil
-[NSArray dictionary]
-[NSArray dictionaryObjectsAndKeys:@"1", @"a", @"2", @"b", @1848, @"c", nil]
+   local fragment="$1"
+
+   case "${fragment}" in
+      decode*)
+         cat <<EOF
+[[[NSUnarchiver alloc] initForReadingWithData:[NSData data]] autorelease]
 EOF
+      ;;
+
+      *)
+         cat <<EOF
+[[[NSArchiver alloc] initForWritingWithMutableData:[NSMutableData data]] autorelease]
+EOF
+      ;;
+   esac
 }
 
 
-emit_NSDictionary_pointer_printer()
-{
-   local variable="$1"
-   local indent="$2"
-
-   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
-}

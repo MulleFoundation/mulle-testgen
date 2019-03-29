@@ -1,0 +1,25 @@
+static void   test_i_init_with_array_()"
+{
+   @autoreleasepool
+   {
+      NSArray *obj;
+      NSArray *value;
+      NSArray * params_1[] =
+      {
+         nil,
+         [NSArray array],
+         [NSArray arrayWithObjects:@"1", @"2", @1848, nil]
+      };
+      unsigned int   i_1;
+      unsigned int   n_1 = 3;
+
+      obj = [NSArray alloc];
+      for( i_1 = 0; i_1 < n_1; i_1++)
+      {
+         value = [obj initWithArray:params_1[ i_1]];
+         printf( "%s\n", [value cStringDescription]);
+      }
+      [obj release];
+   }
+}
+

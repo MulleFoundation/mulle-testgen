@@ -28,13 +28,20 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-MULLE_TESTGEN_PLUGIN_NSMUTABLEARRAY_SH="included"
-
-emit_NSMutableArray_values()
+emit_NSMutableArray_pointer_values()
 {
    cat <<EOF
 nil
 [NSMutableArray array]
 [NSMutableArray arrayWithObjects:@"1", @"2", @1848, nil]
 EOF
+}
+
+
+emit_NSMutableArray_pointer_printer()
+{
+   local variable="$1"
+   local indent="$2"
+
+   echo "${indent}printf( \"%s\\n\", [${variable} cStringDescription]);"
 }
