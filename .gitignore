@@ -12,3 +12,4 @@ build/
 mulle-fetch.sublime-workspace
 mulle-project/publisher-info.sh
 
+*.sublime-workspace

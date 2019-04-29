@@ -40,6 +40,7 @@ print_flags()
 {
 
    options_technical_flags_usage " : "
+   echo "   -f    : force overwrite"
 }
 
 
@@ -84,12 +85,6 @@ main()
    local MULLE_FLAG_LOG_VERBOSE='NO'
    local MULLE_FLAG_LOG_MERGE='NO'
    local MULLE_TRACE_POSTPONE='NO'
-   local OPTION_LIBRARY_NAME
-   local OPTION_CLASS_NAME
-   local OPTION_EMIT_PROPERTY_TESTS='NO'
-   local OPTION_EMIT_METHOD_TESTS='NO'
-   local OPTION_TEST_DIR="test"
-
 
    #
    # simple option handling
@@ -116,6 +111,13 @@ main()
             exit 0
          ;;
 
+         --plugin-path)
+            shift
+
+            r_colon_concat "${MULLE_TESTGEN_PLUGIN_PATH}" "$1"
+            MULLE_TESTGEN_PLUGIN_PATH="${RVAL}"
+         ;;
+
          -*)
             usage "Unknown flag \"$1\""
          ;;
@@ -130,12 +132,25 @@ main()
 
    options_setup_trace "${MULLE_TRACE}"
 
+   #
+   # stuff that gets loaded later, possibly overrides previous definitions
+   #
+   r_colon_concat "${MULLE_TESTGEN_LIBEXEC_DIR}/plugins" "${MULLE_TESTGEN_PLUGIN_PATH}"
+   MULLE_TESTGEN_PLUGIN_PATH="${RVAL}"
+
    local cmd="$1"
    [ $# -eq 0 ] || shift
 
    case "${cmd}" in
       ""|help)
          usage
+      ;;
+
+      class)
+         # shellcheck source=src/mulle-fetch-commands.sh
+         . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
+
+         testgen_class_main "$@"
       ;;
 
       generate)
@@ -145,6 +160,13 @@ main()
          testgen_generate_main "$@"
       ;;
 
+      method)
+         # shellcheck source=src/mulle-fetch-commands.sh
+         . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
+
+         testgen_method_main "$@"
+      ;;
+
       plugin)
          # shellcheck source=src/mulle-fetch-commands.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-plugin.sh"
@@ -152,13 +174,12 @@ main()
          testgen_plugin_main "$@"
       ;;
 
-      print)
+      property)
          # shellcheck source=src/mulle-fetch-commands.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
-         testgen_print_main "$@"
+         testgen_property_main "$@"
       ;;
-
 
       uname)
          echo "${MULLE_UNAME}"
@@ -167,6 +188,10 @@ main()
       version)
          echo "${MULLE_EXECUTABLE_VERSION}"
          return 0
+      ;;
+
+      *)
+         fail "Unknown command \"${cmd}\""
       ;;
    esac
 }

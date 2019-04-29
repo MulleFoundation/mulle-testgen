@@ -46,20 +46,20 @@ main()
 
    _options_mini_main "$@"
 
-   test_print "NSArray *" \
+   test_print "NSArray" \
               "+arrayWithArray:" \
               "NSArray *,NSArray *,SEL,NSArray *" \
               ex1.txt
 
    log_verbose "----- #1 PASSED -----"
 
-   test_print "NSArray *" \
+   test_print "NSArray" \
               "-initWithArray:" \
               "NSArray *,NSArray *,SEL,NSArray *" \
               ex2.txt
    log_verbose "----- #2 PASSED -----"
 
-   test_print "NSArray *" \
+   test_print "NSArray" \
               "-subarrayWithRange:options:" \
               "NSArray *,NSArray *,SEL,NSRange,unsigned int"  \
               ex3.txt
