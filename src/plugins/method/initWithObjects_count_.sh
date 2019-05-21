@@ -28,7 +28,7 @@
 #   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 #   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #
-emit_initWithObject_varargList__test()
+emit_initWithObjects_count__test()
 {
    local classname="$1"
    local classname_pointer="$2"
@@ -40,36 +40,49 @@ emit_initWithObject_varargList__test()
    local family="$8"
 
    cat <<EOF
-//
-// c-function is va_list
-//
-static void   _${functionname}( id first, ...)
+static int   ${functionname}( void)
 {
-   va_list   args;
-   ${classname}  *obj;
+   NSArray    *obj;
 
+   // should be OK usually
    @try
    {
-      va_start( args, first);
-      obj = [[[${classname} alloc] initWithObject:first
-                                       arguments:args] autorelease];
+      obj  = [[[${classname} alloc] initWithObjects:nil
+                                               count:0] autorelease];
       printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
-      va_end( args);
    }
    @catch( NSException *localException)
    {
       printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
    }
-}
 
+   // should raise
+   @try
+   {
+      obj  = [[[${classname} alloc] initWithObjects:nil
+                                              count:1] autorelease];
+      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+   }
+   @catch( NSException *localException)
+   {
+      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+   }
 
-static int   ${functionname}( void)
-{
-   _${functionname}( @"nix", nil);
-   _${functionname}( @"%@", @1, nil);
-   _${functionname}( @"%@ %@ %@ %@ %@", @1, @2, @3, @4, @5, nil);
+   @try
+   {
+      id    objects[] = { @1, @2, @3 };
+
+      obj = [[[${classname} alloc] initWithObjects:@1, @2, @3
+                                             count:3] autorelease];
+      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+   }
+   @catch( NSException *localException)
+   {
+      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+   }
    return( 0);
 }
+
 
 EOF
 }

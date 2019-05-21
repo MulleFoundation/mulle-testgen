@@ -34,7 +34,6 @@ emit_unsigned_long_values()
 0
 1
 1848
-LONG_MAX
 EOF
 }
 

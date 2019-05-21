@@ -8,5 +8,5 @@
 
 Executable        | Description
 ------------------|--------------------------------
-`mulle-testgen`   | Query platform information
+`mulle-testgen`   | Create test code files
 

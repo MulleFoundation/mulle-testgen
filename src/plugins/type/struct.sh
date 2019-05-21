@@ -47,7 +47,7 @@ recode_struct_type()
          return 0
       ;;
 
-      varargList)
+      arguments)
          RVAL="va_list"
          return 0
       ;;

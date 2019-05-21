@@ -34,14 +34,15 @@ MULLE_TESTGEN_GENERATE_SH="included"
 testgen_print_flags()
 {
    cat <<EOF
+   -0          : dont create a subdirectory for each class
    -1          : write one test file for each method
    -e          : test code exits on error immediately
    -C <class>  : restrict output to <class>
-   -M <method> : restrict output to <method>
    -d <dir>    : test directory (test)
    -i          : emit test code for init methods
    -l <name>   : name of library to use for includes
    -m          : emit test code for public methods (except init)
+   -M <method> : restrict output to <method>
    -p          : emit test code for properties
    -P <prefix> : emit only test code for classes with prefix
 EOF
@@ -69,8 +70,7 @@ Usage:
 
       touch test/10_generated/.foo.m
 
-   This tool currently only generates some Objective-C code that can be used
-   to actually write tests. Its going to become smarter over time.
+   If no tests are selected with options a simple "noleak" test is created.
 
 Options:
 EOF
@@ -745,6 +745,9 @@ three comma-separated values"
    # TODO: brauche eine andere testart fuer init Methoden, weil da der "value"
    # sofort released werden muss und das obj dafür nicht mehr.
    #
+   # TODO:  sollte co-dependent parameters wie ...objects:count: rausfinden
+   #        und die gesondert behandeln... irgendwie...
+   #
    local obj
    local n
 
@@ -814,8 +817,14 @@ create_method_test_file()
       fname="${fname}${identifier:0:32}-${hash}.m"
    fi
 
-   filename="${OPTION_TEST_DIR}/${classname}/${fname}"
-   ignorefilename="${OPTION_TEST_DIR}/${classname}/.${fname}"
+   if [ "${OPTION_SUBDIR_PER_CLASS}" = 'YES' ]
+   then
+      filename="${OPTION_TEST_DIR}/${classname}/${fname}"
+      ignorefilename="${OPTION_TEST_DIR}/${classname}/.${fname}"
+   else
+      filename="${OPTION_TEST_DIR}/${classname}-${fname}"
+      ignorefilename="${OPTION_TEST_DIR}/.${classname}-${fname}"
+   fi
 
    if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
    then
@@ -1196,7 +1205,12 @@ generate_class_test()
    local ignorefilename
    local fname
 
-   fname="test-${classname}.m"
+   if [ "${OPTION_SUBDIR_PER_CLASS}" = 'YES' ]
+   then
+      fname="${classname}/test.m"
+   else
+      fname="test-${classname}.m"
+   fi
    filename="${OPTION_TEST_DIR}/${fname}"
    ignorefilename="${OPTION_TEST_DIR}/.${fname}"
 
@@ -1384,6 +1398,7 @@ testgen_generate_main()
    local OPTION_EMIT_INIT_METHOD_TESTS='NO'
    local OPTION_EMIT_METHOD_TESTS='NO'
    local OPTION_EMIT_PROPERTY_TESTS='NO'
+   local OPTION_SUBDIR_PER_CLASS='YES'
    local OPTION_LIBRARY_NAME
    local OPTION_TEST_DIR="test/10_generated"
    local OPTION_CLASS_PREFIX='[A-Z]'
@@ -1419,11 +1434,6 @@ testgen_generate_main()
             OPTION_TEST_DIR="$1"
          ;;
 
-         -P|--class-prefix)
-            shift
-            OPTION_CLASS_PREFIX="$1"
-         ;;
-
          -i|--emit-init-tests)
             OPTION_EMIT_INIT_METHOD_TESTS='YES'
          ;;
@@ -1433,6 +1443,11 @@ testgen_generate_main()
             OPTION_LIBRARY_NAME="$1"
          ;;
 
+         -P|--class-prefix)
+            shift
+            OPTION_CLASS_PREFIX="$1"
+         ;;
+
          -p|--emit-property-tests)
             OPTION_EMIT_PROPERTY_TESTS='YES'
          ;;
@@ -1440,6 +1455,12 @@ testgen_generate_main()
          -m|--emit-method-tests)
             OPTION_EMIT_METHOD_TESTS='YES'
          ;;
+
+         -0|--no-subdir-per-class)
+            shift
+            OPTION_SUBDIR_PER_CLASS='NO'
+         ;;
+
 
          -1|--one-file-per-method)
             OPTION_ONE_FILE_PER_METHOD='YES'

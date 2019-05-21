@@ -260,7 +260,7 @@ testgen_plugin_load_types_in_dir()
    log_fluff "Loading type plugins in \"${directory}\"..."
 
    IFS=$'\n'
-   for pluginpath in `ls -1 "${directory}/"*.sh`
+   for pluginpath in `ls -1 "${directory}/"*.sh 2> /dev/null`
    do
       IFS="${DEFAULT_IFS}"
 
@@ -304,7 +304,11 @@ r_plugin_name_for_method()
 
    RVAL="$1"
    case "${RVAL}" in
-      +*|-*)
+      +*)
+         RVAL="cls_${RVAL:1}"
+      ;;
+
+      -*)
          RVAL="${RVAL:1}"
       ;;
    esac
@@ -337,6 +341,12 @@ r_plugin_filename_for_method()
 
    if r_plugin_name_for_method "$@"
    then
+      case "${RVAL}" in
+         cls_*)
+            RVAL="class/${RVAL:4}"
+         ;;
+      esac
+
       RVAL="${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/method/${RVAL}.sh"
       log_debug "filename=${RVAL}"
       return 0
@@ -381,7 +391,7 @@ testgen_plugin_load_methods_from_dir()
    local pluginpath
 
    IFS=$'\n'
-   for pluginpath in `ls -1 "${directory}/"*.sh`
+   for pluginpath in `ls -1 "${directory}/"*.sh 2> /dev/null`
    do
       IFS="${DEFAULT_IFS}"
 
@@ -409,6 +419,7 @@ testgen_plugin_load_all_methods()
       IFS="${DEFAULT_IFS}"
 
       testgen_plugin_load_methods_from_dir "${directory}/method"
+      testgen_plugin_load_methods_from_dir "${directory}/method/class"
    done
 
    IFS="${DEFAULT_IFS}"
