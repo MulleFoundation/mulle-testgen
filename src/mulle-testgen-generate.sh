@@ -40,7 +40,7 @@ testgen_print_flags()
    -C <class>  : restrict output to <class>
    -d <dir>    : test directory (test)
    -i          : emit test code for init methods
-   -l <name>   : name of library to use for includes
+   -l <name>   : name of library
    -m          : emit test code for public methods (except init)
    -M <method> : restrict output to <method>
    -p          : emit test code for properties
@@ -57,10 +57,9 @@ testgen_generate_usage()
 Usage:
    ${MULLE_USAGE_NAME} generate [options]
 
-   Generate Objective-C test files. This script loads and Objective-C
-   static library, and emits a test file for each non-root Objective-C
-   class that is defined in this library. By default existing tests are not
-   overwritten.
+   Generate Objective-C test files. This script loads an Objective-C static
+   library. For each non-root Objective-C class that is defined in this
+   library it emits a test file. By default existing tests are not overwritten.
 
    You should first craft your library, then setup your mulle-test folder
    and then run this script.
@@ -262,7 +261,6 @@ static void   test_noleak( void)
 
 EOF
 }
-
 
 
 r_emit_param_definition()
@@ -582,7 +580,7 @@ testgen_emit_methodcall()
       fragment="${selectorparse%%:*}"
       selectorparse="${selectorparse#*:}"
 
-      printf "%s%s:params_%s[ i_%s]%s" "${delim}" "${fragment}" "$i" "$i"
+      printf "%s%s:params_%s[ i_%s]" "${delim}" "${fragment}" "$i" "$i"
       delim=$'\n'"${indent}          " # fudged
 
       i=$((i + 1))
@@ -622,7 +620,7 @@ testgen_emit_printer()
    if [ -z "${functionname}" -o "`type -t "${functionname}" `" != "function" ]
    then
       echo "${indent}// no plugin printer found for ${type}"
-      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \"not \");"
+      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");"
       return
    fi
 
@@ -631,11 +629,10 @@ testgen_emit_printer()
                           "${indent}"
    then
       echo "${indent}// plugin printer didnt handle ${type}"
-      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \"not \");"
+      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");"
       return
    fi
 }
-
 
 
 _emit_method_test_coda()
@@ -773,8 +770,11 @@ three comma-separated values"
                            "${family}" \
                            "${indent}"
 
-   if [ "${returntype}" != "void" ]
+   if [ "${returntype}" = "void" ]
    then
+      # assume obj was mutated so print it
+      testgen_emit_printer "${classname_pointer}" "" "3" "${indent}"
+   else
       testgen_emit_printer "${returntype}" "${name}" "${family}" "${indent}"
    fi
 
@@ -873,7 +873,7 @@ ${text}
 "
       echo "${text}" > "${filename}"
    else
-      log_verbose "No test for ${functionname} generated"
+      log_verbose "No test for method ${functionname} generated"
    fi
 }
 
@@ -969,7 +969,8 @@ emit_method_tests()
    local classname="$1"
    local classid="$2"
    local library="$3"
-   local emitinit="$4"
+   local filtermethodid="$4"
+   local emitinit="$5"
 
    local classid
    local classname
@@ -981,6 +982,15 @@ emit_method_tests()
    local variadic
    local bits
    local i
+
+   local cmdline
+
+   local cmdline="'${MULLE_OBJC_LISTA}' -a -f '${filterclassid}'"
+   if [ ! -z "${filtermethodid}" ]
+   then
+      cmdline="${cmdline} -M ${filtermethodid}"
+   fi
+   cmdline="${cmdline} -m '${library}'"
 
    i=0
    while IFS=";" read -r m_classid \
@@ -1045,7 +1055,7 @@ emit_method_tests()
             fi
          fi
       fi
-   done < <( rexekutor "${MULLE_OBJC_LISTA}" -f "${classid}" -m "${library}" )
+   done < <( eval_rexekutor "${cmdline}" )
 
    if [ ${i} -eq 0 ]
    then
@@ -1118,6 +1128,7 @@ emit_property_tests()
    local classname="$1"
    local classid="$2"
    local library="$3"
+   local filtermethodid="$4"
 
    local p_classid
    local p_classname
@@ -1139,7 +1150,7 @@ emit_property_tests()
       fi
       i=$((i + 1))
       emit_property_test "${p_classname}" "${p_name}" "${p_signature}" || return 1
-   done < <( rexekutor "${MULLE_OBJC_LISTA}" -f "${classid}" -p "${library}" )
+   done < <( rexekutor "${MULLE_OBJC_LISTA}" -a -f "${classid}" -p "${library}" )
 
    if [ ${i} -eq 0 ]
    then
@@ -1156,6 +1167,7 @@ emit_class_test()
    local classname="$2"
    local library="$3"
    local libraryname="$4"
+   local filtermethodid="$5"
 
    emit_test_header "${libraryname}" || return 1
 
@@ -1171,15 +1183,15 @@ emit_class_test()
       TEST_FUNCTIONS=""
       if [ "${OPTION_EMIT_PROPERTY_TESTS}" = 'YES' ]
       then
-         emit_property_tests "${classname}" "${classid}" "${library}" || return 1
+         emit_property_tests "${classname}" "${classid}" "${library}" "${filtermethodid}" || return 1
       fi
       if [ "${OPTION_EMIT_METHOD_TESTS}" = 'YES' ]
       then
-         emit_method_tests "${classname}" "${classid}" "${library}" 'NO' || return 1
+         emit_method_tests "${classname}" "${classid}" "${library}" "${filtermethodid}" 'NO' || return 1
       fi
       if [ "${OPTION_EMIT_INIT_METHOD_TESTS}" = 'YES' ]
       then
-         emit_method_tests "${classname}" "${classid}" "${library}" 'YES' || return 1
+         emit_method_tests "${classname}" "${classid}" "${library}" "${filtermethodid}" 'YES' || return 1
       fi
       emit_class_test_footer ${TEST_FUNCTIONS} || return 1
    fi
@@ -1194,6 +1206,7 @@ generate_class_test()
    local classname="$2"
    local library="$3"
    local libraryname="$4"
+   local filtermethodid="$5"
 
    [ -z "${classid}" ]     && internal_fail "classid is empty"
    [ -z "${classname}" ]   && internal_fail "classname is empty"
@@ -1229,7 +1242,7 @@ generate_class_test()
       return
    fi
 
-   if text="`emit_class_test "${classid}" "${classname}" "${library}" "${libraryname}" `"
+   if text="`emit_class_test "${classid}" "${classname}" "${library}" "${libraryname}" "${filtermethodid}" `"
    then
       log_info "${filename}"
       r_mkdir_parent_if_missing "${filename}"
@@ -1237,7 +1250,10 @@ generate_class_test()
       log_debug "Write \"${filename}\""
       echo "${text}" > "${filename}"
    else
-      log_verbose "No test for ${classname} generated"
+      if [ "${OPTION_ONE_FILE_PER_METHOD}" != 'YES' ]
+      then
+         log_verbose "No test for class ${classname} generated"
+      fi
    fi
 }
 
@@ -1248,7 +1264,8 @@ generate_class_tests_from_csv()
 
    local library="$1"
    local libraryname="$2"
-   local lines="$3"
+   local filtermethodid="$3"
+   local lines="$4"
 
    local c_classname
    local c_classid
@@ -1285,7 +1302,7 @@ generate_class_tests_from_csv()
          continue
       fi
 
-      generate_class_test "${c_classid}" "${c_classname}" "${library}" "${libraryname}" & # || fail "failed to generate test for \"${c_classname}\""
+      generate_class_test "${c_classid}" "${c_classname}" "${library}" "${libraryname}" "${filtermethodid}" & # || fail "failed to generate test for \"${c_classname}\""
    done < <( echo "${lines}")
 
    wait
@@ -1306,8 +1323,9 @@ generate_class_tests()
 
    if [ ! -z "${filterclassid}" ]
    then
-      cmdline="${cmdline} -f '${filterclassid}'"
+      cmdline="${cmdline} -a -f '${filterclassid}'"
    fi
+
    cmdline="${cmdline} -C '${library}'"
 
    lines="`eval_rexekutor "${cmdline}" `" || fail "mulle-objc-lista failed"
@@ -1317,7 +1335,7 @@ generate_class_tests()
       return
    fi
 
-   generate_class_tests_from_csv "${library}" "${libraryname}" "${lines}"
+   generate_class_tests_from_csv "${library}" "${libraryname}" "${filtermethodid}" "${lines}"
 }
 
 
@@ -1461,7 +1479,6 @@ testgen_generate_main()
             OPTION_SUBDIR_PER_CLASS='NO'
          ;;
 
-
          -1|--one-file-per-method)
             OPTION_ONE_FILE_PER_METHOD='YES'
          ;;
@@ -1510,19 +1527,28 @@ testgen_generate_main()
          ;;
       esac
 
-      check="build/Debug/${library}"
+      local check
+      local searched
+
+      KITCHEN_DIR="${KITCHEN_DIR:-kitchen}"
+
+      check="${KITCHEN_DIR}/Debug/${library}"
       log_fluff "Looking for \"${check}\""
+
       if [ ! -f "${check}" ]
       then
-         check="build/Release/${library}"
+         searched="${check#${MULLE_USER_PWD}/}"
+         check="${KITCHEN_DIR}/Release/${library}"
          log_fluff "Looking for \"${check}\""
          if [ ! -f "${check}" ]
          then
-            check="build/${library}"
+            searched="${searched}:${check#${MULLE_USER_PWD}/}"
+            check="${KITCHEN_DIR}/${library}"
             log_fluff "Looking for \"${check}\""
             if [ ! -f "${check}" ]
             then
-               fail "Could not find a \"${library}\" static library"
+               searched="${searched}:${check#${MULLE_USER_PWD}/}"
+               fail "Could not find a \"${library}\" static library in \"$searched\""
             fi
          fi
       fi

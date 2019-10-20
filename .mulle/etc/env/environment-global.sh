@@ -1,0 +1,6 @@
+#
+#
+#
+export MULLE_OBJC_EPHEMERAL_SINGLETON="YES"
+
+

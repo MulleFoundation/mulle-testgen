@@ -48,7 +48,7 @@ static int   ${functionname}( void)
    @try
    {
       obj  = [[[${classname} alloc] initWithObjects:nil] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {

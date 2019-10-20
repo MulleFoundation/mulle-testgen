@@ -44,5 +44,5 @@ emit_SEL_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", [NSStringFromSelector( ${variable}) UTF8String]);"
+   echo "${indent}printf( \"%s\\n\", ${variable} ? [NSStringFromSelector( ${variable}) UTF8String] : \"*NULL*\");"
 }

@@ -49,7 +49,7 @@ static int   ${functionname}( void)
    {
       obj  = [[[${classname} alloc] initWithObjects:nil
                                                count:0] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
@@ -61,7 +61,7 @@ static int   ${functionname}( void)
    {
       obj  = [[[${classname} alloc] initWithObjects:nil
                                               count:1] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
@@ -74,7 +74,7 @@ static int   ${functionname}( void)
 
       obj = [[[${classname} alloc] initWithObjects:@1, @2, @3
                                              count:3] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {

@@ -44,12 +44,13 @@ Usage:
    A method plugin emits a complete test for a specified selector.
 
 Commands:
-   type-list                : list available type plugins
-   type-filename <type>     : output plugin filename path for type
-   type-functionname <type> : output bash functionname for type
-   method-list              : list available method plugins
    method-filename <m>      : output plugin filename path for method
-   method-functionname <m>  : output bash functionname for method
+   method-list              : list available method plugins
+   printer-functionname <t> : output bash functionname to print type
+   recode-functionname <t>  : output bash functionname to recode type
+   type-filename <type>     : output plugin filename path for type
+   type-list                : list available type plugins
+   values-functionname <t>  : output bash functionname to emit values for type
 EOF
 
    exit 1
@@ -84,7 +85,7 @@ testgen_plugin_list()
    [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
    [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
 
-   log_info "${type} plugins"
+   log_info "${subdir} plugins"
 
    (
       local directory
@@ -94,7 +95,7 @@ testgen_plugin_list()
       do
          IFS="${DEFAULT_IFS}"
 
-         testgen_plugin_list_in_dir "${directory}/${type}"
+         testgen_plugin_list_in_dir "${directory}/${subdir}"
       done
    ) | sort
 }
@@ -104,9 +105,31 @@ testgen_plugin_list()
 # TYPE
 #
 
-r_plugin_name_for_type()
+r_plugin_fallback_for_type()
 {
-   log_entry "r_plugin_name_for_type" "$@"
+   log_entry "r_plugin_fallback_for_type" "$@"
+
+   local signature="$1"
+
+   # remove trailing spaces
+   signature="${signature%% }"
+
+   case "${signature}" in
+      # TODO: walk up the inheritance chain ?
+      *)
+         RVAL="id"
+         log_debug "name=${RVAL}"
+         return 0
+      ;;
+   esac
+
+   return 1
+}
+
+
+r_plugin_best_name_for_type()
+{
+   log_entry "r_plugin_best_name_for_type" "$@"
 
    local signature="$1"
    local suffix="$2"
@@ -121,35 +144,48 @@ r_plugin_name_for_type()
 
       *\*)
          is_pointer='YES'
-         r_plugin_name_for_type "${signature%\*}" "_pointer${suffix}"
+         r_plugin_best_name_for_type "${signature%\*}" "_pointer"
          return $?
       ;;
 
       @\".*\")
          RVAL="${signature#@\"}"
          RVAL="${RVAL%\"}"
-         RVAL="${RVAL}${suffix}"
          RVAL="${RVAL// /_}"
+         RVAL="${RVAL}${suffix}"  # add _pointer
          log_debug "name=${RVAL}"
-         return 0
+         return 2  # have fallback
       ;;
 
       @)
          RVAL="id"
+         RVAL="${RVAL}${suffix}"  # add _pointer
          log_debug "name=${RVAL}"
          return 0
       ;;
 
       struct*)
          RVAL="struct"
+         RVAL="${RVAL}${suffix}"  # add _pointer
          log_debug "name=${RVAL}"
          return 0
       ;;
 
-      *)
-         RVAL="${signature}${suffix}"
+      # looks like a class ? try fallback code
+      [_A-Z][A-Z][A-Z]*)
+         RVAL="${signature}"
          RVAL="`tr -C 'A-Za-z0-9-_' _ <<< "${RVAL}" `"
          RVAL="${RVAL%?}"  # remove encoded linefeed
+         RVAL="${RVAL}${suffix}"  # add _pointer
+         log_debug "name=${RVAL}"
+         return 2
+      ;;
+
+      *)
+         RVAL="${signature}"
+         RVAL="`tr -C 'A-Za-z0-9-_' _ <<< "${RVAL}" `"
+         RVAL="${RVAL%?}"  # remove encoded linefeed
+         RVAL="${RVAL}${suffix}"  # add _pointer
          log_debug "name=${RVAL}"
          return 0
       ;;
@@ -157,18 +193,65 @@ r_plugin_name_for_type()
 }
 
 
+#
+# Not very beautiful hack. Basically what we need to do is to export
+# the inheritance chain of the class from mulle-objc-lista and then search for
+# plugin implementations i.e. NSMutableCharacterSet -> NSCharacterSet -> NSObject -> id
+# mulle-objc-lista can't do this itself, because
+#
+# a) its just looking at one library (not all libraries)
+# b) its just looking at the loadclass not the class hierarchy
+#
+r_plugin_find_functionname_for_type()
+{
+   log_entry "r_plugin_find_functionname_for_type" "$@"
+
+   local type="$1"
+   local prefix="$2"
+   local suffix="$3"
+
+   local functionname
+   local fallbackfunctionname
+   local rval
+
+   r_plugin_best_name_for_type "${type}"
+   rval=$?
+
+   functionname="${prefix}${RVAL}${suffix}"
+
+   if [ $rval -eq 2 ]
+   then
+      rval=0
+      if [ "`type -t "${functionname}" `" != "function" ]
+      then
+         if r_plugin_fallback_for_type "$@"
+         then
+            fallbackfunctionname="${prefix}${RVAL}${suffix}"
+            if [ "`type -t "${fallbackfunctionname}" `" = "function" ]
+            then
+               functionname="${fallbackfunctionname}"
+            fi
+         fi
+      fi
+   fi
+
+   RVAL=
+   if [ "${rval}" -eq 0 ]
+   then
+      RVAL="${functionname}"
+   fi
+
+   log_debug "functionname=${RVAL}"
+   return $rval
+}
+
+
+
 r_plugin_recode_functionname_for_type()
 {
    log_entry "r_plugin_recode_functionname_for_type" "$@"
 
-   if r_plugin_name_for_type "$@"
-   then
-      RVAL="recode_${RVAL}_type"
-      log_debug "type=${RVAL}"
-      return 0
-   fi
-
-   return 1
+   r_plugin_find_functionname_for_type "$1" "recode_" "_type"
 }
 
 
@@ -176,42 +259,31 @@ r_plugin_values_functionname_for_type()
 {
    log_entry "r_plugin_values_functionname_for_type" "$@"
 
-   if r_plugin_name_for_type "$@"
-   then
-      RVAL="emit_${RVAL}_values"
-      log_debug "functionname=${RVAL}"
-      return 0
-   fi
-   return 1
+   r_plugin_find_functionname_for_type "$1" "emit_" "_values"
 }
 
 
 r_plugin_printer_functionname_for_type()
 {
-   log_entry "r_plugin_printer_functionname_for_type"
+   log_entry "r_plugin_printer_functionname_for_type" "$@"
 
-   if r_plugin_name_for_type "$@"
-   then
-      RVAL="emit_${RVAL}_printer"
-      log_debug "functionname=${RVAL}"
-      return 0
-   fi
-   return 1
+   r_plugin_find_functionname_for_type "$1" "emit_" "_printer"
 }
 
 
-r_plugin_filename_for_type()
-{
-   log_entry "r_plugin_filename_for_type"
-
-   if r_plugin_name_for_type "$@"
-   then
-      RVAL="${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/type/${RVAL}.sh"
-      log_debug "filename=${RVAL}"
-      return 0
-   fi
-   return 1
-}
+# unused coz we load all anyway
+#r_plugin_filename_for_type()
+#{
+#   log_entry "r_plugin_filename_for_type"
+#
+#   if r_plugin_best_name_for_type "$@"
+#   then
+#      RVAL="${MULLE_TESTGEN_LIBEXEC_DIR}/plugins/type/${RVAL}.sh"
+#      log_debug "filename=${RVAL}"
+#      return 0
+#   fi
+#   return 1
+#}
 
 
 testgen_plugin_load_type()
@@ -465,7 +537,25 @@ testgen_plugin_main()
          testgen_plugin_list "method"
       ;;
 
-      type-filename|type-function)
+      method-filename|type-filename)
+         local string
+
+         [ $# -eq 0 ] && testgen_plugin_usage "missing parameter"
+
+         string="$1"; shift
+
+         [ $# -ne 0 ] && testgen_plugin_usage "superflous parameters \"$*\""
+
+         name="${cmd%%-filename}"
+
+         if ! "r_plugin_filename_for_${name}" "${string}"
+         then
+            fail "Untranslatable method"
+         fi
+         echo "${RVAL}"
+      ;;
+
+      recode-functionname|printer-functionname|values-functionname)
          local typestring
 
          [ $# -eq 0 ] && testgen_plugin_usage "missing parameter"
@@ -474,46 +564,13 @@ testgen_plugin_main()
 
          [ $# -ne 0 ] && testgen_plugin_usage "superflous parameters \"$*\""
 
+         local name
 
-         case "${cmd}" in
-            *filename)
-               r_plugin_filename_for_type "${typestring}"
-            ;;
+         name="${cmd%%-functionname}"
 
-            *)
-               r_plugin_values_functionname_for_type "${typestring}"
-            ;;
-         esac
-         if [ $? -ne 0 ]
+         if ! "r_plugin_${name}_functionname_for_type" "${typestring}"
          then
             fail "Untranslatable type"
-         fi
-         echo "${RVAL}"
-      ;;
-
-      method-filename|method-function)
-         local methodstring
-
-         [ $# -eq 0 ] && testgen_plugin_usage "missing parameter"
-
-         methodstring="$1"; shift
-
-         [ $# -ne 0 ] && testgen_plugin_usage "superflous parameters \"$*\""
-
-
-         case "${cmd}" in
-            *filename)
-               r_plugin_filename_for_method "${methodstring}"
-            ;;
-
-            *)
-               r_plugin_test_functionname_for_method "${methodstring}"
-            ;;
-         esac
-
-         if [ $? -ne 0 ]
-         then
-            fail "Untranslatable method"
          fi
          echo "${RVAL}"
       ;;

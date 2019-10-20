@@ -54,8 +54,8 @@ static void   ${functionname}( void)
       data = [NSArchiver archivedDataWithRootObject:obj];
       obj2 = [NSUnarchiver unarchiveObjectWithData:data];
 
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
-      printf( "%s\\n", [[obj2 mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj  ? [[obj mulleTestDescription] UTF8String]  : "*nil*");
+      printf( "%s\\n", obj2 ? [[obj2 mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {

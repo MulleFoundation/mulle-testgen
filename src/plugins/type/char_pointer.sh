@@ -51,5 +51,5 @@ emit_char_pointer_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", ${variable});"
+   echo "${indent}printf( \"%s\\n\", ${variable} ? ${variable} : \"*NULL*\");"
 }

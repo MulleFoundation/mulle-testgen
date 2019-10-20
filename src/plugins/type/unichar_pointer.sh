@@ -64,5 +64,5 @@ emit_unichar_pointer_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%S\\n\", ${variable});"
+   echo "${indent}printf( \"%S\\n\", ${variable} ? ${variable} :  \"\");"
 }

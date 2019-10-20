@@ -62,7 +62,7 @@ emit_initWithObject_mulleVarargList__test()
       mulle_vararg_start( args, first);
       obj = [[[${classname} alloc] initWithObject:first
                                   mulleVarargList:args] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
       mulle_vararg_end( args);
    }
    @catch( NSException *localException)

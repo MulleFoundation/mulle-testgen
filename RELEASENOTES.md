@@ -1,3 +1,8 @@
+## 0.16.0
+
+* improved filtering
+
+
 ### 0.0.2
 
 * Various small improvements

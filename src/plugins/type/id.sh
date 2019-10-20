@@ -47,6 +47,6 @@ emit_id_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", [[${variable} mulleTestDescription] UTF8String]);"
+   echo "${indent}printf( \"%s\\n\", ${variable} ? [[${variable} mulleTestDescription] UTF8String] : \"*nil*\");"
 }
 

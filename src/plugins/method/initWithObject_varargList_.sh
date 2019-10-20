@@ -53,7 +53,7 @@ static void   _${functionname}( id first, ...)
       va_start( args, first);
       obj = [[[${classname} alloc] initWithObject:first
                                        arguments:args] autorelease];
-      printf( "%s\\n", [[obj mulleTestDescription] UTF8String]);
+      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
       va_end( args);
    }
    @catch( NSException *localException)
