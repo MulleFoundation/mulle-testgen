@@ -5,11 +5,12 @@
 # no git operations.
 #
 
-VERSIONFILE="mulle-testgen"
-VERSIONNAME="MULLE_EXECUTABLE_VERSION"
+# VERSIONFILE="src/Project.h"
+# VERSIONNAME="PROJECT_VERSION"
+
 #
-# Other files getting the version written into. Write only. Linefeed separated.
+# Other files that get the version written into. Write only. Linefeed separated.
 #
 # VERSIONMIRRORNAME=MULLE_EXECUTABLE_VERSION # remove to just write as echo
 # VERSIONFILEMIRRORS="\
-#src/mulle-sde/<|PROJECT_NAME|>/version"
+#src/mulle-sde/Project/version"

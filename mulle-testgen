@@ -52,7 +52,7 @@ usage()
 Usage:
    ${MULLE_USAGE_NAME} [flags] <command>
 
-   Generate Objective-C test files.
+   Generate Objective-C test files. See `generate -h` for more help.
 
 Flags:
 EOF
@@ -239,11 +239,8 @@ _init()
    . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-file.sh" ||
       fail "failed to load bashfunctions from ${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}"
 
-   local _libexec_dir
-
-   _get_libexec_dir "$0" "mulle-testgen" "mulle-testgen-plugin.sh"
-
-   MULLE_TESTGEN_LIBEXEC_DIR="${_libexec_dir}"
+   r_get_libexec_dir "$0" "mulle-testgen" "mulle-testgen-plugin.sh"
+   MULLE_TESTGEN_LIBEXEC_DIR="${RVAL}"
 
    #
    # minimal setup exit

@@ -61,8 +61,16 @@ Usage:
    library. For each non-root Objective-C class that is defined in this
    library it emits a test file. By default existing tests are not overwritten.
 
-   You should first craft your library, then setup your mulle-test folder
-   and then run this script.
+   You should first craft your library. Then generate the test after having
+   built the library. Then generate the tests and then setup your mulle-test
+   folder. You can not run this script inside "test", as mulle-test will not
+   have a static library.
+
+   So the initial sequence might be:
+
+      mulle-sde craft
+      mulle-sde run mulle-testgen generate
+      mulle-sde test init
 
    Prevent generation of specific tests, by creating a '.' file of the same
    name:
@@ -1510,8 +1518,12 @@ testgen_generate_main()
 
    if [ -z "${library}" ]
    then
-      r_fast_basename "${MULLE_USER_PWD}"
-      library="${RVAL}"
+      library="${PROJECT_NAME}"
+      if [ -z "${library}" ]
+      then
+         r_basename "${MULLE_USER_PWD}"
+         library="${RVAL}"
+      fi
       log_fluff "Assuming \"${library}\" as name"
    fi
 
@@ -1548,7 +1560,13 @@ testgen_generate_main()
             if [ ! -f "${check}" ]
             then
                searched="${searched}:${check#${MULLE_USER_PWD}/}"
-               fail "Could not find a \"${library}\" static library in \"$searched\""
+               check="dependency/lib/${library}"
+               log_fluff "Looking for \"${check}\""
+               if [ ! -f "${check}" ]
+               then
+                  searched="${searched}:${check#${MULLE_USER_PWD}/}"
+                  fail "Could not find a \"${library}\" static library in \"$searched\""
+               fi
             fi
          fi
       fi
