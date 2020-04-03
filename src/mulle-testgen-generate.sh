@@ -63,8 +63,8 @@ Usage:
 
    You should first craft your library. Then generate the test after having
    built the library. Then generate the tests and then setup your mulle-test
-   folder. You can not run this script inside "test", as mulle-test will not
-   have a static library.
+   folder. You can not run mulle-testgen inside the "test" folder, as
+   mulle-test will not have a static library.
 
    So the initial sequence might be:
 
@@ -825,13 +825,16 @@ create_method_test_file()
       fname="${fname}${identifier:0:32}-${hash}.m"
    fi
 
-   if [ "${OPTION_SUBDIR_PER_CLASS}" = 'YES' ]
+   if [ ! -z "${OPTION_TEST_DIR}" ]
    then
-      filename="${OPTION_TEST_DIR}/${classname}/${fname}"
-      ignorefilename="${OPTION_TEST_DIR}/${classname}/.${fname}"
-   else
-      filename="${OPTION_TEST_DIR}/${classname}-${fname}"
-      ignorefilename="${OPTION_TEST_DIR}/.${classname}-${fname}"
+      if [ "${OPTION_SUBDIR_PER_CLASS}" = 'YES' ]
+      then
+         filename="${OPTION_TEST_DIR}/${classname}/${fname}"
+         ignorefilename="${OPTION_TEST_DIR}/${classname}/.${fname}"
+      else
+         filename="${OPTION_TEST_DIR}/${classname}-${fname}"
+         ignorefilename="${OPTION_TEST_DIR}/.${classname}-${fname}"
+      fi
    fi
 
    if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
@@ -866,12 +869,7 @@ create_method_test_file()
                                "${isclassmethod}" \
                                "${family}"`"
    then
-      log_info "${filename}"
-      r_mkdir_parent_if_missing "${filename}"
-
-      log_debug "Write \"${filename}\""
-
-      text="`emit_test_header "${libraryname}"`
+      text="`emit_test_header "${classname}"`
 
 
 ${text}
@@ -879,7 +877,16 @@ ${text}
 
 `emit_method_test_footer "${functionname}"`
 "
-      echo "${text}" > "${filename}"
+      if [ "${filename}" ]
+      then
+         log_info "${filename}"
+         r_mkdir_parent_if_missing "${filename}"
+
+         log_debug "Write \"${filename}\""
+         printf "%s" "${text}" > "${filename}"
+      else
+         printf "%s\n" "${text}"
+      fi
    else
       log_verbose "No test for method ${functionname} generated"
    fi
@@ -1403,9 +1410,9 @@ testgen_method_main()
 
 
 
-testgen_p_main()
+testgen_property_main()
 {
-   log_entry "testgen_p_main" "$@"
+   log_entry "testgen_property_main" "$@"
 
    testgen_environment
 

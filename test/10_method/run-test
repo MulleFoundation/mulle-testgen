@@ -25,7 +25,7 @@ test_print()
 
    [ ! -f "${expectfile}" ] && fail "\"${expectfile}\" is missing"
 
-   if ! result="`run_mulle_testgen print "${class_pointer}" "${name}" "${signature}" `"
+   if ! result="`run_mulle_testgen method "${class_pointer}" "${name}" "${signature}" "7" `"
    then
       fail "mulle-testgen errored out"
    fi
@@ -35,6 +35,7 @@ test_print()
    diffs="`diff -w -B <(echo "${result}") "${expectfile}" `"
    if [ ! -z "${diffs}" ]
    then
+      echo "${result}" >&2
       fail "Diffs to \"${expectfile}\": ${diffs}"
    fi
 }
