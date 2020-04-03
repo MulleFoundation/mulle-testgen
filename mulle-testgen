@@ -33,7 +33,7 @@
 [ "${TRACE}" = 'YES'  ] && set -x && : "$0" "$@"
 
 
-MULLE_EXECUTABLE_VERSION="0.16.0"
+MULLE_EXECUTABLE_VERSION="0.17.0"
 
 
 print_flags()
@@ -147,35 +147,35 @@ main()
       ;;
 
       class)
-         # shellcheck source=src/mulle-fetch-commands.sh
+         # shellcheck source=src/mulle-testgen-generate.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
          testgen_class_main "$@"
       ;;
 
       generate)
-         # shellcheck source=src/mulle-fetch-commands.sh
+         # shellcheck source=src/mulle-testgen-generate.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
          testgen_generate_main "$@"
       ;;
 
       method)
-         # shellcheck source=src/mulle-fetch-commands.sh
+         # shellcheck source=src/mulle-testgen-generate.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
          testgen_method_main "$@"
       ;;
 
       plugin)
-         # shellcheck source=src/mulle-fetch-commands.sh
+         # shellcheck source=src/mulle-testgen-generate.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-plugin.sh"
 
          testgen_plugin_main "$@"
       ;;
 
       property)
-         # shellcheck source=src/mulle-fetch-commands.sh
+         # shellcheck source=src/mulle-testgen-generate.sh
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
          testgen_property_main "$@"

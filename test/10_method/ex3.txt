@@ -1,38 +1,63 @@
-static void   test_i_subarray_with_range_options_()"
+#ifdef __MULLE_OBJC__
+# import <NSArray/NSArray.h>
+# include <mulle-testallocator/mulle-testallocator.h>
+#else
+# import <Foundation/Foundation.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#if defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))
+# include <unistd.h>
+#endif
+
+
+static int   test_i_subarray_with_range_options_( void)
 {
-   @autoreleasepool
+   NSArray *obj;
+   NSArray *value;
+   NSRange params_1[] =
    {
-      NSArray *obj;
-      NSArray *value;
-      NSRange params_1[] =
-      {
-         NSMakeRange( 0, 0),
-         NSMakeRange( -1, 1),
-         NSMakeRange( 0, -1),
-         NSMakeRange( INT_MAX, INT_MAX)
-      };
-      unsigned int   i_1;
-      unsigned int   n_1 = 4;
+      NSMakeRange( 0, 0),
+      NSMakeRange( 0, 2),
+      NSMakeRange( 1, 1),
+      NSMakeRange( -1, 1),
+      NSMakeRange( 0, -1),
+      NSMakeRange( INT_MAX, INT_MAX)
+   };
+   unsigned int   i_1;
+   unsigned int   n_1 = sizeof( params_1) / sizeof( NSRange);
+   unsigned int params_2[] =
+   {
+      0,
+      1,
+      1848
+   };
+   unsigned int   i_2;
+   unsigned int   n_2 = sizeof( params_2) / sizeof( unsigned int);
 
-      unsigned int params_2[] =
+   for( i_1 = 0; i_1 < n_1; i_1++)
+      for( i_2 = 0; i_2 < n_2; i_2++)
       {
-         0,
-         1,
-         1848,
-         INT_MAX
-      };
-      unsigned int   i_2;
-      unsigned int   n_2 = 4;
-
-      obj = [[NSArray alloc] init];
-      for( i_1 = 0; i_1 < n_1; i_1++)
-         for( i_2 = 0; i_2 < n_2; i_2++)
+         @try
          {
+            obj = [[[NSArray alloc] init] autorelease];
             value = [obj subarrayWithRange:params_1[ i_1]
                          options:params_2[ i_2]];
-            printf( "%s\n", [value cStringDescription]);
+            printf( "%s\n", value ? [[value mulleTestDescription] UTF8String] : "*nil*");
          }
-      [obj release];
-   }
+         @catch( NSException *localException)
+         {
+            printf( "Threw a %s exception\n", [[localException name] UTF8String]);
+         }
+      }
+   return( 0);
 }
 
+
+int   main( int argc, char *argv[])
+{
+   int   rval;
+
+   rval = test_i_subarray_with_range_options_();
+   return( rval);
+}

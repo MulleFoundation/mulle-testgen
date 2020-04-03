@@ -1,23 +1,48 @@
-static void   test_c_array_with_array_()"
-{
-   @autoreleasepool
-   {
-      NSArray *value;
-      NSArray * params_1[] =
-      {
-         nil,
-         [NSArray array],
-         [NSArray arrayWithObjects:@"1", @"2", @1848, nil]
-      };
-      unsigned int   i_1;
-      unsigned int   n_1 = 3;
+#ifdef __MULLE_OBJC__
+# import <NSArray/NSArray.h>
+# include <mulle-testallocator/mulle-testallocator.h>
+#else
+# import <Foundation/Foundation.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#if defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))
+# include <unistd.h>
+#endif
 
-      for( i_1 = 0; i_1 < n_1; i_1++)
+
+static int   test_c_array_with_array_( void)
+{
+   NSArray *value;
+   NSArray * params_1[] =
+   {
+      [NSArray array],
+      [NSArray arrayWithObjects:@"1", @"2", @1848, nil],
+      nil
+   };
+   unsigned int   i_1;
+   unsigned int   n_1 = sizeof( params_1) / sizeof( NSArray *);
+
+   for( i_1 = 0; i_1 < n_1; i_1++)
+   {
+      @try
       {
          value = [NSArray arrayWithArray:params_1[ i_1]];
-         printf( "%s\n", [value cStringDescription]);
+         printf( "%s\n", value ? [[value mulleTestDescription] UTF8String] : "*nil*");
       }
-      [obj release];
+      @catch( NSException *localException)
+      {
+         printf( "Threw a %s exception\n", [[localException name] UTF8String]);
+      }
    }
+   return( 0);
 }
 
+
+int   main( int argc, char *argv[])
+{
+   int   rval;
+
+   rval = test_c_array_with_array_();
+   return( rval);
+}

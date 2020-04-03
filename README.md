@@ -5,8 +5,37 @@
 ![Last version](https://img.shields.io/github/tag/mulle-foundation/mulle-testgen.svg)
 
 
-
 Executable        | Description
 ------------------|--------------------------------
 `mulle-testgen`   | Create test code files
+
+
+
+## Usage
+
+Generate Objective-C test files. This script loads an Objective-C static
+library. For each non-root Objective-C class that is defined in this
+library it emits a test file. By default existing tests are not overwritten.
+
+You should first craft your library. Then generate the test after having
+built the library. Then generate the tests and then setup your mulle-test
+folder. You can not run **mulle-testgen** inside the `test` folder, as
+mulle-test will not have a static library.
+
+So the initial sequence might be:
+
+```
+mulle-sde craft
+mulle-sde run mulle-testgen generate
+mulle-sde test init
+```
+
+Prevent generation of specific tests, by creating a '.' file of the same
+name:
+
+```
+touch test/10_generated/.foo.m
+```
+
+If no tests are selected with options a simple "noleak" test is created.
 
