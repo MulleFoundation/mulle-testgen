@@ -8,5 +8,6 @@ mulle-sde -v craft --serial || exit 1
 
 if [ -d test ]
 then
-   mulle-sde -v test --serial
+   mulle-sde -v test craft --serial
+   mulle-sde -v test run
 fi
