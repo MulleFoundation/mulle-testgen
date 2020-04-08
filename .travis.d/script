@@ -10,5 +10,5 @@ if [ -d test ]
 then
    # here verbose is more distracting and duplicates much of what we've seen
    mulle-sde test craft &&
-   mulle-sde -v test run --serial
+   mulle-sde -v test run
 fi
