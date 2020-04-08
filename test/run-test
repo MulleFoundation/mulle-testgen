@@ -20,6 +20,17 @@ main()
 
    log_verbose "mulle-testgen: `mulle-testgen version` (`mulle-testgen libexec-dir`)"
 
+   while [ $# -ne 0 ]
+   do
+      case "$1" in
+         --serial)
+            shift
+            continue
+         ;;
+      esac
+      break
+   done
+
    OUTPUT_DEVICE=
    for i in "${TEST_DIR}"/*
    do
