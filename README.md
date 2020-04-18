@@ -25,10 +25,11 @@ mulle-test will not have a static library.
 So the initial sequence might be:
 
 ```
-mulle-sde craft
+mulle-sde craft  # mulle-testgen should be in `./dependency/bin` now
 mulle-sde run mulle-testgen generate
 mulle-sde test init
 ```
+
 
 Prevent generation of specific tests, by creating a '.' file of the same
 name:
