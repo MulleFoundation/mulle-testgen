@@ -20,16 +20,28 @@ main()
 
    log_verbose "mulle-testgen: `mulle-testgen version` (`mulle-testgen libexec-dir`)"
 
-   while [ $# -ne 0 ]
+   local quote
+   local args
+   local arg
+
+   quote="'"
+   args=""
+   for arg in "$@"
    do
-      case "$1" in
+      case "${arg}" in
          --serial)
-            shift
             continue
          ;;
       esac
-      break
+
+      arg="${arg//${quote}/${quote}\"${quote}\"${quote}}"
+      args="${args} '${arg}'"
    done
+
+   unset quote
+   unset arg
+
+
 
    OUTPUT_DEVICE=
    for i in "${TEST_DIR}"/*
@@ -41,9 +53,9 @@ main()
          log_verbose "------------------------------------------"
          if [ "${MULLE_FLAG_LOG_TERSE}" = 'YES' ]
          then
-            ( cd "$i" && ./run-test "$@" > /dev/null 2>&1 ) || fail "Test \"$i\" failed"
+            ( cd "$i" && eval "./run-test" "${args}" > /dev/null 2>&1 ) || fail "Test \"$i\" failed"
          else
-            ( cd "$i" && ./run-test "$@" ) || fail "Test \"$i\" failed"
+            ( cd "$i" && eval "./run-test" "${args}" ) || fail "Test \"$i\" failed"
          fi
       fi
    done

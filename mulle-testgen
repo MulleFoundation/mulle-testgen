@@ -201,12 +201,6 @@ main()
 ###
 ### INIT
 ###
-trap_fail()
-{
-   exit 1
-}
-
-
 _init()
 {
    #
@@ -214,7 +208,7 @@ _init()
    #
    if [ "$1" = "version" ]
    then
-      echo "${MULLE_EXECUTABLE_VERSION}"
+      printf "%s\n" "${MULLE_EXECUTABLE_VERSION}"
       exit 0
    fi
 
@@ -225,7 +219,7 @@ _init()
       then
          if [ -z "`command -v "${executablepath}"`" ]
          then
-            echo "Fatal Error: Could not find mulle-bashfunctions-env in PATH ($PATH) - mulle-bashfunctions not installed ?" >&2
+             echo "Fatal Error: Could not find mulle-bashfunctions-env in PATH (not installed ?)" >&2
          else
             echo "Fatal Error: Could not find libexec of mulle-bashfunctions-env ($PWD)" >&2
          fi
@@ -233,7 +227,7 @@ _init()
       fi
    fi
 
-      # shellcheck source=../mulle-bashfunctions/src/mulle-string.sh
+   # shellcheck source=../mulle-bashfunctions/src/mulle-string.sh
    . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" "minimal" &&
    . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-path.sh" &&
    . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-file.sh" ||
@@ -258,8 +252,9 @@ _init()
 
    trap trap_fail INT
    set -o pipefail
-}
 
+   shopt -s extglob || internal_fail "Cant extglob"
+}
 ###
 ### INIT
 ###
@@ -267,4 +262,16 @@ _init()
 
 
 _init "$@" # needs params
-main "$@"
+
+quote="'"
+args=""
+for arg in "$@"
+do
+   arg="${arg//${quote}/${quote}\"${quote}\"${quote}}"
+   args="${args} '${arg}'"
+done
+
+unset quote
+unset arg
+
+eval main "${MULLE_MONITOR_FLAGS}" "${args}"
