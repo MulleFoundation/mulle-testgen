@@ -37,7 +37,7 @@ emit_NSCoder_pointer_values()
    case "${fragment}" in
       encodeWithCoder)
          cat <<EOF
-[[[NSArchiver alloc] initForWritingWithMutableData:[NSMutableData object]] autorelease]
+[[[NSArchiver alloc] initForWritingWithMutableData:[NSMutableData data]] autorelease]
 EOF
       ;;
 

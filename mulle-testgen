@@ -33,7 +33,7 @@
 [ "${TRACE}" = 'YES'  ] && set -x && : "$0" "$@"
 
 
-MULLE_EXECUTABLE_VERSION="0.17.1"
+MULLE_EXECUTABLE_VERSION="0.18.0"
 
 
 print_flags()
