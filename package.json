@@ -1,0 +1,15 @@
+{
+   "name" : "mulle-testgen",
+   "version" : "0.18.0",
+   "description" : "🦟 Torture your code with auto-generated tests",
+   "homepage" : "https://github.com/MulleFoundation/mulle-testgen",
+   "bugs" : "https://github.com/MulleFoundation/mulle-testgen/issues",
+   "keywords" : [],
+   "license" : "UNLICENSED",
+   "repository" : {
+      "type" : "git",
+      "url" : "MulleFoundation/mulle-testgen"
+   },
+   "dependencies" : {
+   }
+}
