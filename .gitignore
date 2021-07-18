@@ -8,7 +8,6 @@
 tmp.*
 tmp/
 build/
-.mulle/var/
 mulle-fetch.sublime-workspace
 mulle-project/publisher-info.sh
 
