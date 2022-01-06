@@ -30,13 +30,72 @@
 #   POSSIBILITY OF SUCH DAMAGE.
 #
 #
-[ "${TRACE}" = 'YES'  ] && set -x && : "$0" "$@"
+[ "${TRACE}" = 'YES' -o "${MULLE_TESTGEN_TRACE}" = 'YES' ] && set -x && : "$0" "$@"
 
 
-MULLE_EXECUTABLE_VERSION="0.19.0"
+MULLE_EXECUTABLE_VERSION="0.20.0"
+
+##########################################################################
+###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###
+###########################################################################
+# #
+# # PRELUDE - Standard startup code for loading mulle-bashfunctions
+# #
+###
+
+#
+# Figure out MULLE_BASHFUNCTIONS_LIBEXEC_DIR on this machine if needed.
+#
+if [ -z "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}" ]
+then
+   MULLE_BASHFUNCTIONS_LIBEXEC_DIR="`mulle-bashfunctions libexec-dir`" || exit 1
+   export MULLE_BASHFUNCTIONS_LIBEXEC_DIR
+fi
+
+#
+# The booter reruns the executable either with bash or zsh, whatever the
+# system provides. On the second run --no-auto-shell will be set first.
+#
+if [ "$1" != --no-auto-shell ]
+then
+   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-boot.sh" || exit 1
+else
+   shift    # get rid of --no-auto-shell
+fi
 
 
-print_flags()
+#
+# Include mulle-bashfunctions.sh         : default functions
+#         mulle-bashfunctions-none.sh    : almost no functions
+#         mulle-bashfunctions-minimal.sh : few functions for basic scripts
+#         mulle-bashfunctions-all.sh     : everything, even obscure functions
+#
+# Do this first to get aliases
+#
+. "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" || exit 1
+
+###
+# # Now we are in bash or zsh with mulle-bashfunctions loaded
+# #
+###########################################################################
+###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###   ###
+###########################################################################
+
+MULLE_EXECUTABLE="${BASH_SOURCE[0]:-${(%):-%x}}"
+
+
+#
+# Determine location of own libexec directory. Which is `src` in development
+# and ../libexec when deployed. MULLE_EXECUTABLE needs to be defined for this.
+#
+if [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ]
+then
+   r_get_libexec_dir "${MULLE_EXECUTABLE}" "mulle-testgen" "mulle-testgen-plugin.sh"
+   MULLE_TESTGEN_LIBEXEC_DIR="${RVAL}"
+fi
+
+
+testgen::print_flags()
 {
 
    options_technical_flags_usage " : "
@@ -44,19 +103,19 @@ print_flags()
 }
 
 
-usage()
+testgen::usage()
 {
    [ $# -ne 0 ] && log_error "$*"
 
    cat <<EOF >&2
-Usage:
-   ${MULLE_USAGE_NAME} [flags] <command>
+usage:
+   ${MULLE_EXECUTABLE_NAME} [flags] <command>
 
-   Generate Objective-C test files. See `generate -h` for more help.
+   Generate Objective-C test files. See \`generate -h\` for more help.
 
 Flags:
 EOF
-   print_flags | LC_ALL=C sort >&2
+   testgen::print_flags | LC_ALL=C sort >&2
 
    cat <<EOF >&2
 
@@ -69,7 +128,7 @@ EOF
 }
 
 
-main()
+testgen::main()
 {
    local MULLE_FLAG_MAGNUM_FORCE='NO'
 
@@ -103,7 +162,7 @@ main()
          ;;
 
          -h*|--help|help)
-            usage
+            testgen::usage
          ;;
 
          --version)
@@ -119,7 +178,7 @@ main()
          ;;
 
          -*)
-            usage "Unknown flag \"$1\""
+            testgen::usage "Unknown flag \"$1\""
          ;;
 
          *)
@@ -143,7 +202,7 @@ main()
 
    case "${cmd}" in
       ""|help)
-         usage
+         testgen::usage
       ;;
 
       class)
@@ -151,6 +210,10 @@ main()
          . "${MULLE_TESTGEN_LIBEXEC_DIR}/mulle-testgen-generate.sh"
 
          testgen_class_main "$@"
+      ;;
+
+      libexec-dir)
+         printf "%s\n" "${MULLE_TESTGEN_LIBEXEC_DIR}"
       ;;
 
       generate)
@@ -197,81 +260,4 @@ main()
 }
 
 
-########
-###
-### INIT
-###
-_init()
-{
-   #
-   # minimal setup exit
-   #
-   if [ "$1" = "version" ]
-   then
-      printf "%s\n" "${MULLE_EXECUTABLE_VERSION}"
-      exit 0
-   fi
-
-   if [ -z "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}" ]
-   then
-      MULLE_BASHFUNCTIONS_LIBEXEC_DIR="`mulle-bashfunctions-env libexec-dir 2> /dev/null`"
-      if [ -z "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}" ]
-      then
-         if [ -z "`command -v "${executablepath}"`" ]
-         then
-             echo "Fatal Error: Could not find mulle-bashfunctions-env in PATH (not installed ?)" >&2
-         else
-            echo "Fatal Error: Could not find libexec of mulle-bashfunctions-env ($PWD)" >&2
-         fi
-         exit 1
-      fi
-   fi
-
-   # shellcheck source=../mulle-bashfunctions/src/mulle-string.sh
-   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-bashfunctions.sh" "minimal" &&
-   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-path.sh" &&
-   . "${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}/mulle-file.sh" ||
-      fail "failed to load bashfunctions from ${MULLE_BASHFUNCTIONS_LIBEXEC_DIR}"
-
-   r_get_libexec_dir "$0" "mulle-testgen" "mulle-testgen-plugin.sh"
-   MULLE_TESTGEN_LIBEXEC_DIR="${RVAL}"
-
-   #
-   # minimal setup exit
-   #
-   case "$1" in
-      "libexec-dir"|"library-path")
-         echo "${MULLE_TESTGEN_LIBEXEC_DIR}"
-         exit 0
-      ;;
-   esac
-
-
-   #  set -e # more pain then gain in the end
-   #  set -u # doesn't work with my style
-
-   trap trap_fail INT
-   set -o pipefail
-
-   shopt -s extglob || internal_fail "Cant extglob"
-}
-###
-### INIT
-###
-########
-
-
-_init "$@" # needs params
-
-quote="'"
-args=""
-for arg in "$@"
-do
-   arg="${arg//${quote}/${quote}\"${quote}\"${quote}}"
-   args="${args} '${arg}'"
-done
-
-unset quote
-unset arg
-
-eval main "${MULLE_MONITOR_FLAGS}" "${args}"
+call_with_flags "testgen::main" "${MULLE_TESTGEN_FLAGS}" "$@"

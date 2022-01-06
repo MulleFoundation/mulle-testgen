@@ -40,3 +40,8 @@ touch test/10_generated/.foo.m
 
 If no tests are selected with options a simple "noleak" test is created.
 
+
+
+### You are here
+
+![Overview](overview.dot.svg)
