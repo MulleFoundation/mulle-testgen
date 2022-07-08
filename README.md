@@ -2,7 +2,7 @@
 
 #### 🦟 Torture your code with auto-generated tests
 
-![Last version](https://img.shields.io/github/tag/mulle-foundation/mulle-testgen.svg)
+![Last version](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg)
 
 
 Executable        | Description
