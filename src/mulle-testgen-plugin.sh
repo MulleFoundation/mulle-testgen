@@ -88,15 +88,10 @@ testgen_plugin_list()
    log_info "${subdir} plugins"
 
    (
-      local directory
-
-      IFS=":"
-      for directory in ${MULLE_TESTGEN_PLUGIN_PATH}
-      do
-         IFS="${DEFAULT_IFS}"
-
+      .foreachpath directory in ${MULLE_TESTGEN_PLUGIN_PATH}
+      .do
          testgen_plugin_list_in_dir "${directory}/${subdir}"
-      done
+      .done
    ) | sort
 }
 
@@ -244,7 +239,6 @@ r_plugin_find_functionname_for_type()
    log_debug "functionname=${RVAL}"
    return $rval
 }
-
 
 
 r_plugin_recode_functionname_for_type()

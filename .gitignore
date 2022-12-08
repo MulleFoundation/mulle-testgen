@@ -20,3 +20,5 @@ addiction/$'\n'.mulle-make-build-dir
 version.old
 .mulle-make-build-dir
 .gdb_history
+cmake-build-*/
+.ackrc
