@@ -1,6 +1,6 @@
 {
    "name" : "mulle-testgen",
-   "version" : "0.18.0",
+   "version" : "0.20.2",
    "description" : "🦟 Torture your code with auto-generated tests",
    "homepage" : "https://github.com/MulleFoundation/mulle-testgen",
    "bugs" : "https://github.com/MulleFoundation/mulle-testgen/issues",
