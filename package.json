@@ -8,7 +8,7 @@
    "license" : "UNLICENSED",
    "repository" : {
       "type" : "git",
-      "url" : "MulleFoundation/mulle-testgen"
+      "url" : "github:MulleFoundation/mulle-testgen"
    },
    "dependencies" : {
    }
