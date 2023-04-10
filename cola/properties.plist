@@ -1,0 +1,12 @@
+{
+   project =
+   {
+      description="🦟 Torture your code with auto-generated tests";
+      domain="github";
+      name="mulle-testgen";
+      user="MulleFoundation";
+      repo="mulle-testgen";
+      homepage="https://github.com/MulleFoundation/mulle-testgen";
+      license="BSD-3-Clause"
+   };
+}

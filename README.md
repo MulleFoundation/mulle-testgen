@@ -2,12 +2,12 @@
 
 #### 🦟 Torture your code with auto-generated tests
 
-![Last version](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg)
+Generates Objective-C tests from introspecting actual methods.
 
-
-Executable        | Description
-------------------|--------------------------------
-`mulle-testgen`   | Create test code files
+> somewhat neglected
+| Release Version                                       | Release Notes
+|-------------------------------------------------------|--------------
+| ![Mulle kybernetiK tag](https://img.shields.io/github/tag//mulle-testgen.svg?branch=release) [![Build Status](https://github.com//mulle-testgen/workflows/CI/badge.svg?branch=release)](//github.com//mulle-testgen/actions)| [RELEASENOTES](RELEASENOTES.md) |
 
 
 
@@ -24,7 +24,7 @@ mulle-test will not have a static library.
 
 So the initial sequence might be:
 
-```
+``` sh
 mulle-sde craft  # mulle-testgen should be in `./dependency/bin` now
 mulle-sde run mulle-testgen generate
 mulle-sde test init
@@ -34,7 +34,7 @@ mulle-sde test init
 Prevent generation of specific tests, by creating a '.' file of the same
 name:
 
-```
+``` sh
 touch test/10_generated/.foo.m
 ```
 
@@ -42,6 +42,48 @@ If no tests are selected with options a simple "noleak" test is created.
 
 
 
+
+
+
 ### You are here
 
 ![Overview](overview.dot.svg)
+
+## Add
+
+Use [mulle-sde](//github.com/mulle-sde) to add mulle-testgen to your project:
+
+``` sh
+mulle-sde add github:MulleFoundation/mulle-testgen
+```
+
+## Install
+
+### Install with mulle-sde
+
+Use [mulle-sde](//github.com/mulle-sde) to build and install mulle-testgen:
+
+``` sh
+mulle-sde install --prefix /usr/local \
+   https://github.com/MulleFoundation/mulle-testgen/archive/latest.tar.gz
+```
+
+### Manual Installation
+
+
+Install **mulle-testgen** into `/usr/local` with [cmake](https://cmake.org):
+
+``` sh
+cmake -B build \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DCMAKE_PREFIX_PATH=/usr/local \
+      -DCMAKE_BUILD_TYPE=Release &&
+cmake --build build --config Release &&
+cmake --install build --config Release
+```
+
+## Author
+
+[Nat!](https://mulle-kybernetik.com/weblog) for Mulle kybernetiK
+
+
