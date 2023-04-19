@@ -1,6 +1,6 @@
 {
    "name" : "mulle-testgen",
-   "version" : "0.20.2",
+   "version" : "0.20.3",
    "description" : "Torture your code with auto-generated tests",
    "keywords" : [],
    "license" : "BSD-3-Clause",
