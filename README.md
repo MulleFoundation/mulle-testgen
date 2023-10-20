@@ -71,6 +71,8 @@ mulle-sde install --prefix /usr/local \
 ### Manual Installation
 
 
+Download the latest [tar](https://github.com/MulleFoundation/mulle-testgen/archive/refs/tags/latest.tar.gz) or [zip](https://github.com/MulleFoundation/mulle-testgen/archive/refs/tags/latest.zip) archive and unpack it.
+
 Install **mulle-testgen** into `/usr/local` with [cmake](https://cmake.org):
 
 ``` sh
