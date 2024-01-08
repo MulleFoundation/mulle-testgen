@@ -1,7 +1,7 @@
 {
    "name" : "mulle-testgen",
-   "version" : "0.20.3",
-   "description" : "Torture your code with auto-generated tests",
+   "version" : "0.20.4",
+   "description" : "🦟 Torture your code with auto-generated tests",
    "keywords" : [],
    "license" : "BSD-3-Clause",
    "repo" : "MulleFoundation/mulle-testgen",
