@@ -7,6 +7,6 @@
       user="MulleFoundation";
       repo="mulle-testgen";
       homepage="https://github.com/MulleFoundation/mulle-testgen";
-      license="BSD-3-Clause"
+      license="BSD-3-Clause";
    };
 }
