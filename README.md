@@ -60,8 +60,6 @@ mulle-sde add github:MulleFoundation/mulle-testgen
 
 ## Install
 
-### Install with mulle-sde
-
 Use [mulle-sde](//github.com/mulle-sde) to build and install mulle-testgen:
 
 ``` sh
@@ -69,7 +67,7 @@ mulle-sde install --prefix /usr/local \
    https://github.com/MulleFoundation/mulle-testgen/archive/latest.tar.gz
 ```
 
-### Manual Installation
+### Legacy Installation
 
 
 Download the latest [tar](https://github.com/MulleFoundation/mulle-testgen/archive/refs/tags/latest.tar.gz) or [zip](https://github.com/MulleFoundation/mulle-testgen/archive/refs/tags/latest.zip) archive and unpack it.

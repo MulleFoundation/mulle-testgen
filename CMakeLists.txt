@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.0)
 
-project( mulle-testgen NONE)
+project( mulle-testgen VERSION 0.20.5 LANGUAGES NONE)
 
 
 #
@@ -65,4 +65,3 @@ DESTINATION "libexec/mulle-testgen/plugins")
 # must be after CPACK_PACKAGE_VERSION
 include( CMakePackage.cmake)
 include( CPack)
-
