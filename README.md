@@ -8,7 +8,7 @@ Generates Objective-C tests from introspecting actual methods.
 
 | Release Version                                       | Release Notes
 |-------------------------------------------------------|--------------
-| ![Mulle kybernetiK tag](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg?branch=release) [![Build Status](https://github.com/MulleFoundation/mulle-testgen/workflows/CI/badge.svg?branch=release)](//github.com/MulleFoundation/mulle-testgen/actions) | [RELEASENOTES](RELEASENOTES.md) |
+| ![Mulle kybernetiK tag](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg) [![Build Status](https://github.com/MulleFoundation/mulle-testgen/workflows/CI/badge.svg)](//github.com/MulleFoundation/mulle-testgen/actions) | [RELEASENOTES](RELEASENOTES.md) |
 
 
 
