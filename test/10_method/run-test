@@ -43,7 +43,7 @@ test_print()
    diffs="`diff -w -B <(echo "${result}") "${expectfile}" `"
    if [ ! -z "${diffs}" ]
    then
-      echo "${result}" >&2
+      printf "%s\n" "${result}" >&2
       fail "Diffs to \"${expectfile}\": ${diffs}"
    fi
 }
@@ -51,7 +51,7 @@ test_print()
 
 main()
 {
-   MULLE_TESTGEN_FLAGS="$@"
+   MULLE_TESTGEN_FLAGS="${MULLE_TESTGEN_FLAGS:-$*}"
 
    _options_mini_main "$@"
 
@@ -59,6 +59,10 @@ main()
               "+arrayWithArray:" \
               "NSArray *,NSArray *,SEL,NSArray *" \
               ex1.txt
+
+   log_verbose "zsh: $ZSH_VERSION"
+   log_verbose "bash: $BASH_VERSION"
+   log_verbose "MULLE_BASH_EXE_SHELL: $MULLE_BASH_EXE_SHELL"
 
    log_verbose "----- #1 PASSED -----"
 

@@ -1,3 +1,5 @@
 Generates Objective-C tests from introspecting actual methods.
 
 > somewhat neglected
+
+It's generally more profitable and easier to let the tests be AI generated.

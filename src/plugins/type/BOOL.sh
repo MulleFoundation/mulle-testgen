@@ -44,5 +44,9 @@ emit_BOOL_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", ${variable} ? \"YES\" : \"NO\");"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%s${lf}", ${variable} ? "YES" : "NO");
+EOF
 }

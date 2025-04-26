@@ -47,5 +47,9 @@ emit_char_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%d\\n\", ${variable});"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%d\${lf}", ${variable});
+EOF
 }

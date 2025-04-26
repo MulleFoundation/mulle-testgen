@@ -41,6 +41,8 @@ emit_encodeWithCoder__test()
    local isclassmethod="$7"
    local family="$8"
 
+   local lf='\n'
+
    cat <<EOF
 static void   ${functionname}( void)
 {
@@ -54,12 +56,12 @@ static void   ${functionname}( void)
       data = [NSArchiver archivedDataWithRootObject:obj];
       obj2 = [NSUnarchiver unarchiveObjectWithData:data];
 
-      printf( "%s\\n", obj  ? [[obj mulleTestDescription] UTF8String]  : "*nil*");
-      printf( "%s\\n", obj2 ? [[obj2 mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj  ? [[obj mulleTestDescription] UTF8String]  : "*nil*");
+      printf( "%s${lf}", obj2 ? [[obj2 mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 }
 

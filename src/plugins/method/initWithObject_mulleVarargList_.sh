@@ -39,6 +39,8 @@ emit_initWithObject_mulleVarargList__test()
    local isclassmethod="$7"
    local family="$8"
 
+   local lf='\n'
+
    cat <<EOF
 //
 // ObjC-function is mulle_vararg_list
@@ -62,12 +64,12 @@ emit_initWithObject_mulleVarargList__test()
       mulle_vararg_start( args, first);
       obj = [[[${classname} alloc] initWithObject:first
                                   mulleVarargList:args] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
       mulle_vararg_end( args);
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 }
 

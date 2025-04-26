@@ -64,13 +64,10 @@ testgen_plugin_list_in_dir()
 
    local directory="$1"
 
-   IFS=$'\n'
-   for pluginpath in `ls -1 "${directory}/"*.sh`
-   do
+   .foreachline pluginpath in $(dir_list_files "${directory}" "*.sh" "f")
+   .do
       basename -- "${pluginpath}" .sh
-   done
-
-   IFS="${DEFAULT_IFS}"
+   .done
 }
 
 
@@ -82,7 +79,6 @@ testgen_plugin_list()
 
    local directory
 
-   [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
    [ -z "${MULLE_TESTGEN_LIBEXEC_DIR}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
 
    log_info "${subdir} plugins"
@@ -90,7 +86,10 @@ testgen_plugin_list()
    (
       .foreachpath directory in ${MULLE_TESTGEN_PLUGIN_PATH}
       .do
-         testgen_plugin_list_in_dir "${directory}/${subdir}"
+         if [ -d "${directory}/${subdir}" ]
+         then
+            testgen_plugin_list_in_dir "${directory}/${subdir}"
+         fi
       .done
    ) | sort
 }
@@ -217,12 +216,12 @@ r_plugin_find_functionname_for_type()
    if [ $rval -eq 2 ]
    then
       rval=0
-      if [ "`type -t "${functionname}" `" != "function" ]
+      if ! shell_is_function "${functionname}"
       then
          if r_plugin_fallback_for_type "$@"
          then
             fallbackfunctionname="${prefix}${RVAL}${suffix}"
-            if [ "`type -t "${fallbackfunctionname}" `" = "function" ]
+            if shell_is_function "${fallbackfunctionname}"
             then
                functionname="${fallbackfunctionname}"
             fi
@@ -295,14 +294,14 @@ testgen_plugin_load_type()
    functionname="emit_${name//-/_}_values"
    functionname2="recode_${name//-/_}_type"
 
-   if [ "`type -t "${functionname}"`" != "function" ] && \
-      [ "`type -t "${functionname2}"`" != "function" ]
+   if ! shell_is_function "${functionname}" && \
+      ! shell_is_function "${functionname2}"
    then
       # shellcheck source=plugins/symlink.sh
       . "${pluginpath}"
 
-      if [ "`type -t "${functionname}"`" != "function" ] && \
-         [ "`type -t "${functionname2}"`" != "function" ]
+      if ! shell_is_function "${functionname}" && \
+         ! shell_is_function "${functionname2}"
       then
          fail "Type plugin \"${pluginpath}\" has no \"${functionname}\" \
 or \"${functionname2}\" function"
@@ -325,15 +324,10 @@ testgen_plugin_load_types_in_dir()
 
    log_fluff "Loading type plugins in \"${directory}\"..."
 
-   IFS=$'\n'
-   for pluginpath in `ls -1 "${directory}/"*.sh 2> /dev/null`
-   do
-      IFS="${DEFAULT_IFS}"
-
+   .foreachline pluginpath in $(dir_list_files "${directory}" "*.sh" "f")
+   .do
       testgen_plugin_load_type "${pluginpath}"
-   done
-
-   IFS="${DEFAULT_IFS}"
+   .done
 }
 
 
@@ -343,20 +337,17 @@ testgen_plugin_load_all_types()
 
    local directory
 
-   [ -z "${DEFAULT_IFS}" ] && internal_fail "DEFAULT_IFS not set"
    [ -z "${MULLE_TESTGEN_PLUGIN_PATH}" ] && internal_fail "MULLE_TESTGEN_LIBEXEC_DIR not set"
 
    log_fluff "Loading type plugins..."
 
-   IFS=":"
-   for directory in ${MULLE_TESTGEN_PLUGIN_PATH}
-   do
-      IFS="${DEFAULT_IFS}"
-
-      testgen_plugin_load_types_in_dir "${directory}/type"
-   done
-
-   IFS="${DEFAULT_IFS}"
+   .foreachpath directory in ${MULLE_TESTGEN_PLUGIN_PATH}
+   .do
+      if [ -d "${directory}/type" ]
+      then
+         testgen_plugin_load_types_in_dir "${directory}/type"
+      fi
+   .done
 }
 
 
@@ -434,12 +425,12 @@ testgen_plugin_load_method()
    name="${RVAL}"
    functionname="emit_${name//-/_}_test"
 
-   if [ "`type -t "${functionname}"`" != "function" ]
+   if ! shell_is_function "${functionname}"
    then
       # shellcheck source=plugins/symlink.sh
       . "${pluginpath}"
 
-      if [ "`type -t "${functionname}"`" != "function" ]
+      if ! shell_is_function "${functionname}"
       then
          fail "Method plugin \"${pluginpath}\" has no \"${functionname}\" function"
       fi
@@ -454,17 +445,13 @@ testgen_plugin_load_methods_from_dir()
    log_entry "testgen_plugin_load_methods_from_dir"
 
    local directory="$1"
+
    local pluginpath
 
-   IFS=$'\n'
-   for pluginpath in `ls -1 "${directory}/"*.sh 2> /dev/null`
-   do
-      IFS="${DEFAULT_IFS}"
-
+   .foreachline pluginpath in $(dir_list_files "${directory}" "*.sh" "f")
+   .do
       testgen_plugin_load_method "${pluginpath}"
-   done
-
-   IFS="${DEFAULT_IFS}"
+   .done
 }
 
 
@@ -479,16 +466,17 @@ testgen_plugin_load_all_methods()
 
    log_fluff "Loading method plugins..."
 
-   IFS=":"
-   for directory in ${MULLE_TESTGEN_PLUGIN_PATH}
-   do
-      IFS="${DEFAULT_IFS}"
-
-      testgen_plugin_load_methods_from_dir "${directory}/method"
-      testgen_plugin_load_methods_from_dir "${directory}/method/class"
-   done
-
-   IFS="${DEFAULT_IFS}"
+   .foreachpath directory in ${MULLE_TESTGEN_PLUGIN_PATH}
+   .do
+      if [ -d "${directory}/method" ]
+      then
+         testgen_plugin_load_methods_from_dir "${directory}/method"
+         if [ -d "${directory}/method/class" ]
+         then
+            testgen_plugin_load_methods_from_dir "${directory}/method/class"
+         fi
+      fi
+   .done
 }
 
 

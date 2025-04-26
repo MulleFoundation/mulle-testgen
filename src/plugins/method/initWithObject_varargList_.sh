@@ -39,6 +39,8 @@ emit_initWithObject_varargList__test()
    local isclassmethod="$7"
    local family="$8"
 
+   local lf='\n'
+
    cat <<EOF
 //
 // c-function is va_list
@@ -53,12 +55,12 @@ static void   _${functionname}( id first, ...)
       va_start( args, first);
       obj = [[[${classname} alloc] initWithObject:first
                                        arguments:args] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
       va_end( args);
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 }
 

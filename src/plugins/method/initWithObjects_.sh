@@ -39,6 +39,8 @@ emit_initWithObjects__test()
    local isclassmethod="$7"
    local family="$8"
 
+   local lf='\n'
+
    cat <<EOF
 static int   ${functionname}( void)
 {
@@ -48,21 +50,21 @@ static int   ${functionname}( void)
    @try
    {
       obj  = [[[${classname} alloc] initWithObjects:nil] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 
    @try
    {
       obj2 = [[[${classname} alloc] initWithObjects:@1, @2, @3, nil] autorelease];
-      printf( "%s\\n", [[obj2 mulleTestDescription] UTF8String]);
+      printf( "%s${lf}", [[obj2 mulleTestDescription] UTF8String]);
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
    return( 0);
 }

@@ -44,5 +44,9 @@ emit_Class_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", [NSStringFromClass( ${variable}) UTF8String]);"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%s${lf}", [NSStringFromClass( ${variable}) UTF8String]);
+EOF
 }

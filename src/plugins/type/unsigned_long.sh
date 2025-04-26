@@ -44,5 +44,9 @@ emit_unsigned_long_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%lu\\n\", ${variable});"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%lu\${lf}", ${variable});
+EOF
 }

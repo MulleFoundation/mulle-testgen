@@ -47,6 +47,9 @@ emit_NSRange_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", [NSStringFromRange( ${variable}) UTF8String]);"
-}
+   local lf='\n'
 
+   cat <<EOF
+${indent}printf( "%s${lf}", [NSStringFromRange( ${variable}) UTF8String]);
+EOF
+}

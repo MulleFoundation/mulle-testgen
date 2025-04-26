@@ -157,6 +157,8 @@ emit_class_test_footer()
       onerror="_exit"
    fi
 
+   local lf='\n'
+
    cat <<EOF
 
 static int   run_test( int (*f)( void), char *name)
@@ -164,7 +166,7 @@ static int   run_test( int (*f)( void), char *name)
    mulle_testallocator_discard();  //  w
    @autoreleasepool                //  i
    {                               //  l  l
-      printf( "%s\\n", name);       //  l  e  c
+      printf( "%s${lf}", name);       //  l  e  c
       if( (*f)())                  //     a  h
          ${onerror}( 1);              //     k  e
    }                               //        c
@@ -190,7 +192,7 @@ EOF
 
    for test in "$@"
    do
-      echo "   errors += run_test( ${test%%;*}, \"${test#*;}\");"
+      printf "   errors += run_test( ${test%%;*}, \"${test#*;}\");\n"
    done
 
    cat <<EOF
@@ -233,6 +235,8 @@ emit_noleak_test()
 
    [ -z "${classname}" ] && internal_fail "classname is empty"
 
+   local lf='\n'
+
 #
 # todo: could check for designated initializer (bits 0x30020) and
 #       and use this instead of "new"
@@ -254,13 +258,13 @@ static void   test_noleak( void)
          obj = [[${classname} new] autorelease];
          if( ! obj)
          {
-            fprintf( stderr, "failed to allocate\\n");
+            fprintf( stderr, "failed to allocate${lf}");
             _exit( 1);
          }
       }
       @catch( NSException *localException)
       {
-         fprintf( stderr, "Threw a %s exception\\n", [[localException name] UTF8String]);
+         fprintf( stderr, "Threw a %s exception${lf}", [[localException name] UTF8String]);
          _exit( 1);
       }
    }
@@ -280,23 +284,25 @@ r_emit_param_definition()
    local type="$3"
    local indent="$4"
 
+
+   printf "%s%s params_%s[] =\n%s{" "${indent}" "${type}" "${n}" "${indent}"
+
    local prefix
 
-   printf "${indent}${type} params_${n}[] ="$'\n'"${indent}{"
-   prefix=$'\n'"${indent}   "
+   prefix=""
 
    local m
    local value
 
    m=0
-   IFS=$'\n'
-   for value in ${values}
-   do
-      printf "%s%s" "${prefix}" "${value}"
-      prefix=","$'\n'"${indent}   "
+
+   .foreachline value in ${values}
+   .do
+      printf "%s\n%s   %s" "${prefix}" "${indent}" "${value}"
+
+      prefix=","
       m=$((m + 1))
-   done
-   IFS="${DEFAULT_IFS}"
+   .done
 
    printf "\n%s};\n" "${indent}"
 
@@ -362,17 +368,17 @@ testgen_collect_parameters()
 
       if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
       then
-         log_trace2 "fragment      = \"${fragment}\""
-         log_trace2 "selectorparse = \"${selectorparse}\""
-         log_trace2 "type          = \"${type}\""
-         log_trace2 "typeparse     = \"${typeparse}\""
+         log_setting "fragment      = \"${fragment}\""
+         log_setting "selectorparse = \"${selectorparse}\""
+         log_setting "type          = \"${type}\""
+         log_setting "typeparse     = \"${typeparse}\""
       fi
 
       while r_plugin_recode_functionname_for_type "${type}"
       do
          functionname="${RVAL}"
 
-         if [ "`type -t "${functionname}" `" != "function" ]
+         if ! shell_is_function "${functionname}"
          then
             log_debug "${functionname} is not defined"
             break
@@ -400,7 +406,7 @@ testgen_collect_parameters()
       if r_plugin_values_functionname_for_type "${type}"
       then
          functionname="${RVAL}"
-         if [ "`type -t "${functionname}" `" = "function" ]
+         if shell_is_function "${functionname}"
          then
             values="`"${functionname}" "${type}" \
                                        "${fragment}" \
@@ -469,7 +475,7 @@ EOF
    then
       obj="${classname}"
    else
-      echo "${indent}${classname_pointer}obj;"
+      printf "%s%sobj;\n" "${indent}" "${classname_pointer}"
       obj="obj"
    fi
 
@@ -477,11 +483,11 @@ EOF
    then
       case "${returntype}" in
          *\*)
-            echo "${indent}${returntype}value;"
+            printf "%s%svalue;\n" "${indent}" "${returntype}"
          ;;
 
          *)
-            echo "${indent}${returntype} value;"
+            printf "%s%s value;\n" "${indent}" "${returntype}"
          ;;
       esac
    fi
@@ -498,19 +504,19 @@ EOF
 
    # emit parameter arrays
 
-   echo
+   printf "\n"
 
    i=1
    while [ $i -le $n ]
    do
-      echo "${indent}for( i_$i = 0; i_$i < n_$i; i_$i++)"
+      printf "%sfor( i_$i = 0; i_$i < n_$i; i_$i++)\n" "${indent}"
       indent="${indent}   "
       i=$(( i + 1))
    done
 
    if [ $n -ne 0 ]
    then
-      echo "${indent#   }{"
+      printf "%s{\n" "${indent#   }"
    fi
 
    cat <<EOF
@@ -520,7 +526,7 @@ EOF
    indent="${indent}   "
    if [ "${isclassmethod}" = 'NO' -a "${family}" != 3 ]
    then
-      echo "${indent}obj = [[[${classname} alloc] init] autorelease];"
+      printf "${indent}obj = [[[${classname} alloc] init] autorelease];\n"
    fi
 
    RVAL="${obj};${indent};${n}"
@@ -565,11 +571,11 @@ testgen_emit_methodcall()
       *)
          case "${family}" in
             1|2|3|4|5)
-               echo " ${selectorparse}] autorelease];"
+               printf " %s] autorelease];\n" "${selectorparse}"
             ;;
 
             *)
-               echo " ${selectorparse}];"
+               printf " %s];\n" "${selectorparse}"
             ;;
          esac
          return 0
@@ -589,7 +595,7 @@ testgen_emit_methodcall()
       selectorparse="${selectorparse#*:}"
 
       printf "%s%s:params_%s[ i_%s]" "${delim}" "${fragment}" "$i" "$i"
-      delim=$'\n'"${indent}          " # fudged
+      printf -v delim "\n%s          " "${indent}"  # fudged
 
       i=$((i + 1))
    done
@@ -600,7 +606,7 @@ testgen_emit_methodcall()
       ;;
    esac
 
-   echo "];"
+   printf "];\n"
 }
 
 
@@ -625,10 +631,10 @@ testgen_emit_printer()
    r_plugin_printer_functionname_for_type "${type}"
    functionname="${RVAL}"
 
-   if [ -z "${functionname}" -o "`type -t "${functionname}" `" != "function" ]
+   if [ -z "${functionname}" ] || ! shell_is_function "${functionname}" ]
    then
-      echo "${indent}// no plugin printer found for ${type}"
-      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");"
+      printf "${indent}// no plugin printer found for ${type}\n"
+      printf "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");\n"
       return
    fi
 
@@ -636,8 +642,8 @@ testgen_emit_printer()
                           "${name}" \
                           "${indent}"
    then
-      echo "${indent}// plugin printer didnt handle ${type}"
-      echo "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");"
+      printf "${indent}// plugin printer didnt handle ${type}\n"
+      printf "${indent}printf( \"${valuename} is%s0\\n\", ! ${valuename} ? \" \" : \" not \");\n"
       return
    fi
 }
@@ -651,6 +657,9 @@ _emit_method_test_coda()
    local indent="$2"
 
    indent="${indent#   }"
+
+   local lf='\\\\n'
+
    cat <<EOF
 ${indent}}
 ${indent}@catch( NSException *localException)
@@ -662,13 +671,11 @@ EOF
    if [ $n -ne 0 ]
    then
       indent="${indent#   }"
-      echo "${indent}}"
+      printf "%s}\n" "${indent}"
    fi
 
-   echo "   return( 0);"
-   echo "}"
-   echo
-   echo
+   printf "   return( 0);\n"
+   printf "}\n\n\n"
 }
 
 
@@ -700,7 +707,7 @@ three comma-separated values"
 
    if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
    then
-      log_trace2 "classname  = \"${classname}\""
+      log_setting "classname  = \"${classname}\""
    fi
 
    local typeparse
@@ -718,9 +725,9 @@ three comma-separated values"
 
    if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
    then
-      log_trace2 "classname_pointer = \"${classname_pointer}\""
-      log_trace2 "returntype = \"${returntype}\""
-      log_trace2 "typeparse  = \"${typeparse}\""
+      log_setting "classname_pointer = \"${classname_pointer}\""
+      log_setting "returntype = \"${returntype}\""
+      log_setting "typeparse  = \"${typeparse}\""
    fi
 
    local plugin_functionname
@@ -729,9 +736,9 @@ three comma-separated values"
    then
       plugin_functionname="${RVAL}"
 
-      if [ "`type -t "${plugin_functionname}" `" = "function" ]
+      if shell_is_function "${plugin_functionname}"
       then
-         log_debug "Exeuting plugin function \"${plugin_functionname}\""
+         log_debug "Executing plugin function \"${plugin_functionname}\""
          "${plugin_functionname}" "${classname}" \
                                   "${classname_pointer}" \
                                   "${name}" \
@@ -839,10 +846,10 @@ create_method_test_file()
 
    if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
    then
-      log_trace2 "name           : ${name}"
-      log_trace2 "fname          : ${fname}"
-      log_trace2 "filename       : ${filename}"
-      log_trace2 "ignorefilename : ${ignorefilename}"
+      log_setting "name           : ${name}"
+      log_setting "fname          : ${fname}"
+      log_setting "filename       : ${filename}"
+      log_setting "ignorefilename : ${ignorefilename}"
    fi
 
    if [ "${MULLE_FLAG_MAGNUM_FORCE}" = 'NO' ]
@@ -875,15 +882,15 @@ create_method_test_file()
 ${text}
 
 
-`emit_method_test_footer "${functionname}"`
-"
+`emit_method_test_footer "${functionname}"`"
+
       if [ "${filename}" ]
       then
          log_info "${filename}"
          r_mkdir_parent_if_missing "${filename}"
 
          log_debug "Write \"${filename}\""
-         printf "%s" "${text}" > "${filename}"
+         redirect_exekutor "${filename}" printf "%s\n" "${text}"
       else
          printf "%s\n" "${text}"
       fi
@@ -1020,15 +1027,15 @@ emit_method_tests()
    do
       if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
       then
-         log_trace2 "class-id:           ${m_classid}"
-         log_trace2 "class-name:         ${m_classname}"
-         log_trace2 "category-id:        ${m_categoryid}"
-         log_trace2 "category-name:      ${m_categoryname}"
-         log_trace2 "method-id:          ${m_methodid}"
-         log_trace2 "method-name:        ${m_name}"
-         log_trace2 "method-signature:   ${m_signature}"
-         log_trace2 "method-variadic:    ${m_variadic}"
-         log_trace2 "method-bits:        ${m_bits}"
+         log_setting "class-id:           ${m_classid}"
+         log_setting "class-name:         ${m_classname}"
+         log_setting "category-id:        ${m_categoryid}"
+         log_setting "category-name:      ${m_categoryname}"
+         log_setting "method-id:          ${m_methodid}"
+         log_setting "method-name:        ${m_name}"
+         log_setting "method-signature:   ${m_signature}"
+         log_setting "method-variadic:    ${m_variadic}"
+         log_setting "method-bits:        ${m_bits}"
       fi
 
       # check for 0x3nnnn
@@ -1157,11 +1164,11 @@ emit_property_tests()
    do
       if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
       then
-         log_trace2 "class-id:           ${p_classid}"
-         log_trace2 "class-name:         ${p_classname}"
-         log_trace2 "property-id:        ${p_id}"
-         log_trace2 "property-name:      ${p_name}"
-         log_trace2 "property-signature: ${p_signature}"
+         log_setting "class-id:           ${p_classid}"
+         log_setting "class-name:         ${p_classname}"
+         log_setting "property-id:        ${p_id}"
+         log_setting "property-name:      ${p_name}"
+         log_setting "property-signature: ${p_signature}"
       fi
       i=$((i + 1))
       emit_property_test "${p_classname}" "${p_name}" "${p_signature}" || return 1
@@ -1263,7 +1270,7 @@ generate_class_test()
       r_mkdir_parent_if_missing "${filename}"
 
       log_debug "Write \"${filename}\""
-      echo "${text}" > "${filename}"
+      redirect_exekutor "${filename}" printf "%s\n" "${text}"
    else
       if [ "${OPTION_ONE_FILE_PER_METHOD}" != 'YES' ]
       then
@@ -1291,10 +1298,10 @@ generate_class_tests_from_csv()
    do
       if [ "${MULLE_FLAG_LOG_SETTINGS}" = 'YES' ]
       then
-         log_trace2 "class-id:        ${c_classid}"
-         log_trace2 "class-name:      ${c_classname}"
-         log_trace2 "superclass-id:   ${c_superid}"
-         log_trace2 "superclass-name: ${c_superclassname}"
+         log_setting "class-id:        ${c_classid}"
+         log_setting "class-name:      ${c_classname}"
+         log_setting "superclass-id:   ${c_superid}"
+         log_setting "superclass-name: ${c_superclassname}"
       fi
 
       case "${c_classname}" in
@@ -1318,7 +1325,7 @@ generate_class_tests_from_csv()
       fi
 
       generate_class_test "${c_classid}" "${c_classname}" "${library}" "${libraryname}" "${filtermethodid}" & # || fail "failed to generate test for \"${c_classname}\""
-   done < <( echo "${lines}")
+   done < <( printf "%s\n" "${lines}")
 
    wait
 }
@@ -1499,7 +1506,7 @@ testgen_generate_main()
          ;;
 
          --version)
-            echo "${MULLE_EXECUTABLE_VERSION}"
+            printf "%s\n" "${MULLE_EXECUTABLE_VERSION}"
             exit 0
          ;;
 

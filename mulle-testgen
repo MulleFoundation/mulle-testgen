@@ -127,6 +127,10 @@ testgen::main()
 
    options_setup_trace "${MULLE_TRACE}"
 
+   log_setting "zsh: $ZSH_VERSION"
+   log_setting "bash: $BASH_VERSION"
+   log_setting "MULLE_BASH_EXE_SHELL: $MULLE_BASH_EXE_SHELL"
+
    #
    # stuff that gets loaded later, possibly overrides previous definitions
    #

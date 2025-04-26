@@ -49,5 +49,9 @@ emit_long_long_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%lld\\n\", ${variable});"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%lld\${lf}", ${variable});
+EOF
 }

@@ -62,5 +62,9 @@ emit_void_pointer_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%p\\n\", ${variable});"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%p\${lf}", ${variable});
+EOF
 }

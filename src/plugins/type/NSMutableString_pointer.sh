@@ -51,5 +51,9 @@ emit_NSMutablePrinter_pointer_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%s\\n\", ${variable} ? [[${variable} mulleTestDescription] UTF8String] : \"*nil*\");"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%s${lf}", ${variable} ? [[${variable} mulleTestDescription] UTF8String] : "*nil*");
+EOF
 }

@@ -47,5 +47,9 @@ emit_float_printer()
    local name="$2"
    local indent="$3"
 
-   echo "${indent}printf( \"%.2f\\n\", ${variable});"
+   local lf='\n'
+
+   cat <<EOF
+${indent}printf( "%.2f\${lf}", ${variable});
+EOF
 }

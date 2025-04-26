@@ -39,6 +39,10 @@ emit_initWithObjects_count__test()
    local isclassmethod="$7"
    local family="$8"
 
+   local lf='\n'
+   #
+   # weird ass code because zsh sucketh
+   #
    cat <<EOF
 static int   ${functionname}( void)
 {
@@ -49,11 +53,11 @@ static int   ${functionname}( void)
    {
       obj  = [[[${classname} alloc] initWithObjects:nil
                                                count:0] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 
    // should raise
@@ -61,11 +65,11 @@ static int   ${functionname}( void)
    {
       obj  = [[[${classname} alloc] initWithObjects:nil
                                               count:1] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
 
    @try
@@ -74,11 +78,11 @@ static int   ${functionname}( void)
 
       obj = [[[${classname} alloc] initWithObjects:@1, @2, @3
                                              count:3] autorelease];
-      printf( "%s\\n", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
+      printf( "%s${lf}", obj ? [[obj mulleTestDescription] UTF8String] : "*nil*");
    }
    @catch( NSException *localException)
    {
-      printf( "Threw a %s exception\\n", [[localException name] UTF8String]);
+      printf( "Threw a %s exception${lf}", [[localException name] UTF8String]);
    }
    return( 0);
 }

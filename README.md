@@ -6,9 +6,12 @@ Generates Objective-C tests from introspecting actual methods.
 
 > somewhat neglected
 
-| Release Version                                       | Release Notes
-|-------------------------------------------------------|--------------
-| ![Mulle kybernetiK tag](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg) [![Build Status](https://github.com/MulleFoundation/mulle-testgen/workflows/CI/badge.svg)](//github.com/MulleFoundation/mulle-testgen/actions) | [RELEASENOTES](RELEASENOTES.md) |
+It's generally more profitable and easier to let the tests be AI generated.
+
+
+| Release Version                                       | Release Notes  | AI Documentation
+|-------------------------------------------------------|----------------|---------------
+| ![Mulle kybernetiK tag](https://img.shields.io/github/tag/MulleFoundation/mulle-testgen.svg) [![Build Status](https://github.com/MulleFoundation/mulle-testgen/workflows/CI/badge.svg)](//github.com/MulleFoundation/mulle-testgen/actions) | [RELEASENOTES](RELEASENOTES.md) | [DeepWiki for mulle-testgen](https://deepwiki.com/MulleFoundation/mulle-testgen)
 
 
 
