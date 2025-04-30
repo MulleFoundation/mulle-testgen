@@ -1,1 +1,1 @@
-mulle-testgen;${MULLE__TESTGEN_NODETYPE:-tar};;46174D52-9101-4B87-8B8E-6088D6E880B2;${MULLE__TESTGEN_URL:-https://github.com/MulleFoundation/mulle-testgen/archive/${MULLE_TAG}.tar.gz};${MULLE__TESTGEN_BRANCH};${MULLE__TESTGEN_TAG:-latest};;
+mulle-testgen;${MULLE__TESTGEN_NODETYPE:-tar};;B41947C1-737E-41A0-ACF2-A77D719A6A9F;${MULLE__TESTGEN_URL:-https://github.com/mulle-nat/mulle-testgen/archive/${MULLE_TAG}.tar.gz};${MULLE__TESTGEN_BRANCH};${MULLE__TESTGEN_TAG:-latest};;
