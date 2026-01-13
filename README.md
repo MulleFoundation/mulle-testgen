@@ -4,9 +4,11 @@
 
 Generates Objective-C tests from introspecting actual methods.
 
-> somewhat neglected
+***ABANDONED*** This project will not be updated anymore.
 
-It's generally more profitable and easier to let the tests be AI generated.
+It's generally more profitable and easier to let the tests be written by
+AI.
+
 
 
 | Release Version                                       | Release Notes  | AI Documentation

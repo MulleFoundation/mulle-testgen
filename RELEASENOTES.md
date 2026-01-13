@@ -1,3 +1,7 @@
+### 0.20.7
+
+Various small improvements
+
 ### 0.20.6
 
 * fixes for the cumbersome and incompatible zsh
