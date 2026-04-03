@@ -37,3 +37,5 @@ test*/**/*.test.*
 !/AGENTS.md
 !/README.md
 environment-user-*.sh
+.roam
+.graveyard
