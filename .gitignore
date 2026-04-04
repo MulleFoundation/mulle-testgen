@@ -39,3 +39,4 @@ test*/**/*.test.*
 environment-user-*.sh
 .roam
 .graveyard
+*.tmp.*
