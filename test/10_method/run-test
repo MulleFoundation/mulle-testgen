@@ -40,7 +40,7 @@ test_print()
 
    local diffs
 
-   diffs="`diff -w -B <(echo "${result}") "${expectfile}" `"
+   diffs="`diff -w -B <(printf "%s\n" "${result}") "${expectfile}" `"
    if [ ! -z "${diffs}" ]
    then
       printf "%s\n" "${result}" >&2

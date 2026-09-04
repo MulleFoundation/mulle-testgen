@@ -6,7 +6,7 @@
       name="mulle-testgen";
       user="MulleFoundation";
       repo="mulle-testgen";
-      version="0.20.9";
+      version="0.20.10";
       homepage="https://github.com/MulleFoundation/mulle-testgen";
       license="BSD-3-Clause";
    };

@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.15)
 
-project( mulle-testgen VERSION 0.20.9 LANGUAGES NONE)
+project( mulle-testgen VERSION 0.20.10 LANGUAGES NONE)
 
 
 #
